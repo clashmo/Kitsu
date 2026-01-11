@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_current_user, get_db
@@ -38,7 +39,7 @@ async def update_current_user_profile(
     current_user.avatar = new_avatar_path
     try:
         await db.commit()
-    except Exception:
+    except SQLAlchemyError:
         await db.rollback()
         delete_avatar_file(new_avatar_path)
         raise

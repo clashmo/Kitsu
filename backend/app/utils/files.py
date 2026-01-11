@@ -31,28 +31,25 @@ async def save_avatar_file(upload: UploadFile) -> str:
     header = await upload.read(_HEADER_BYTES)
     if not header:
         raise ValueError("Empty file upload.")
-    if len(header) > _MAX_AVATAR_SIZE:
-        raise ValueError("Avatar file is too large.")
-
     detected_type = imghdr.what(None, h=header)
     if detected_type not in _ALLOWED_IMAGE_TYPES:
         raise ValueError("Invalid image upload.")
 
+    total_bytes = len(header)
+    if total_bytes > _MAX_AVATAR_SIZE:
+        raise ValueError("Avatar file is too large.")
+
     try:
         with destination.open("wb") as buffer:
             buffer.write(header)
-            total_bytes += len(header)
-            if total_bytes > _MAX_AVATAR_SIZE:
-                raise ValueError("Avatar file is too large.")
-
             while True:
                 chunk = await upload.read(_CHUNK_SIZE)
                 if not chunk:
                     break
-                total_bytes += len(chunk)
-                if total_bytes > _MAX_AVATAR_SIZE:
+                if total_bytes + len(chunk) > _MAX_AVATAR_SIZE:
                     raise ValueError("Avatar file is too large.")
                 buffer.write(chunk)
+                total_bytes += len(chunk)
     except Exception:
         destination.unlink(missing_ok=True)
         raise
