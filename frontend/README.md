@@ -30,6 +30,49 @@ npm run dev
 
 Фронтенд требует доступного бэкенда по `NEXT_PUBLIC_API_URL` и прокси по `NEXT_PUBLIC_PROXY_URL`.
 
+## Устранение неполадок
+
+### Предупреждения SWC и lockfile при `npm run dev`
+
+Если при запуске `npm run dev` вы видите предупреждения:
+```
+⚠ Found lockfile missing swc dependencies, patching...
+⨯ Failed to patch lockfile, please try uninstalling and reinstalling next in this workspace
+[TypeError: Cannot read properties of undefined (reading 'os')]
+```
+
+**Причина**: В репозитории существует `bun.lock`, но npm использует `package-lock.json`. Next.js пытается пропатчить lockfile для SWC-зависимостей и не находит ожидаемую структуру.
+
+**Решение**:
+1. Удалите `node_modules` и `package-lock.json` (если он существует):
+   ```bash
+   rm -rf node_modules package-lock.json
+   ```
+2. Переустановите зависимости:
+   ```bash
+   npm install
+   ```
+3. Если используете Bun вместо npm, выполните:
+   ```bash
+   rm -rf node_modules
+   bun install
+   ```
+
+Это предупреждение **не ломает функциональность**, но может замедлить старт dev-сервера. После переустановки оно исчезнет или станет безвредным.
+
+### Ошибки SSR с localStorage
+
+Проект теперь использует безопасные хелперы для работы с `localStorage` из `src/utils/storage.ts`. Если вы добавляете новый код, работающий с `localStorage`:
+
+- **Не используйте** `localStorage.getItem()` напрямую в рендере компонента или инициализаторах `useState`.
+- **Используйте** хелперы из `src/utils/storage.ts`:
+  - `getLocalStorageJSON<T>(key, defaultValue)` — для чтения JSON
+  - `setLocalStorageJSON<T>(key, value)` — для записи JSON
+  - `getLocalStorageItem(key)` — для чтения строк
+  - `setLocalStorageItem(key, value)` — для записи строк
+
+Эти хелперы автоматически проверяют `typeof window !== "undefined"` и безопасно парсят JSON, предотвращая краши во время SSR.
+
 ## Продакшн/Render
 
 Вариант A (рекомендуемый): Render Web Service (Node.js)

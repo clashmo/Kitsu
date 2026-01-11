@@ -8,6 +8,7 @@ import BlurFade from "./ui/blur-fade";
 import { IAnime } from "@/types/anime";
 import { History } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { getLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
 
 type Props = {
   loading: boolean;
@@ -23,26 +24,23 @@ const ContinueWatching = (props: Props) => {
   const { auth } = useAuthStore();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedData = localStorage.getItem("watched");
-      const watchedAnimes: {
-        anime: { id: string; title: string; poster: string };
-        episodes: string[];
-      }[] = storedData ? JSON.parse(storedData) : [];
+    const watchedAnimes: {
+      anime: { id: string; title: string; poster: string };
+      episodes: string[];
+    }[] = getLocalStorageJSON("watched", []);
 
-      if (!Array.isArray(watchedAnimes)) {
-        localStorage.removeItem("watched");
-        return;
-      }
-
-      const animes = watchedAnimes.reverse().map((ani) => ({
-        id: ani.anime.id,
-        name: ani.anime.title,
-        poster: ani.anime.poster,
-        episode: ani.episodes[ani.episodes.length - 1],
-      }));
-      setAnime(animes as WatchedAnime[]);
+    if (!Array.isArray(watchedAnimes)) {
+      removeLocalStorageItem("watched");
+      return;
     }
+
+    const animes = watchedAnimes.reverse().map((ani) => ({
+      id: ani.anime.id,
+      name: ani.anime.title,
+      poster: ani.anime.poster,
+      episode: ani.episodes[ani.episodes.length - 1],
+    }));
+    setAnime(animes as WatchedAnime[]);
   }, [auth]);
 
   if (props.loading) return <LoadingSkeleton />;
