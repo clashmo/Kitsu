@@ -5,9 +5,9 @@ services:
       - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://kitsu:kitsu@postgres:5432/kitsu
-      - SECRET_KEY=change-me
+      - SECRET_KEY=${SECRET_KEY:?set SECRET_KEY}
       - ALLOWED_ORIGINS=http://localhost:3000
-      - DEBUG=true
+      - DEBUG=${DEBUG:-false}
     ports:
       - "8000:8000"
     volumes:
