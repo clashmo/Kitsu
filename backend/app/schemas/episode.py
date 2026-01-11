@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EpisodeBase(BaseModel):
@@ -18,6 +18,4 @@ class EpisodeCreate(EpisodeBase):
 class EpisodeRead(EpisodeBase):
     id: int
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)

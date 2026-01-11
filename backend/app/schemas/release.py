@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ReleaseBase(BaseModel):
@@ -16,6 +16,4 @@ class ReleaseCreate(ReleaseBase):
 class ReleaseRead(ReleaseBase):
     id: int
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)

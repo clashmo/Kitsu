@@ -28,5 +28,5 @@ class CRUDBase(Generic[ModelType]):
         instance = self.model(**obj_in)
         session.add(instance)
         await session.flush()
+        # Committing is left to the caller to allow transactional control.
         return instance
-

@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -14,7 +13,7 @@ class Settings(BaseModel):
     database_url: str = Field(
         default="postgresql+asyncpg://kitsu:kitsu@db:5432/kitsu"
     )
-    allowed_origins: List[str] = Field(default_factory=lambda: ["*"])
+    allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -33,4 +32,3 @@ class Settings(BaseModel):
 
 
 settings = Settings.from_env()
-

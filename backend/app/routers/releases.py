@@ -18,5 +18,9 @@ async def list_releases(db: AsyncSession = Depends(get_db)) -> list[ReleaseRead]
 @router.post("/", response_model=ReleaseRead, status_code=201)
 async def create_release(payload: ReleaseCreate, db: AsyncSession = Depends(get_db)) -> ReleaseRead:
     # TODO: Persist release to database.
-    return ReleaseRead(id=0, anime_id=payload.anime_id, status=payload.status, released_at=datetime.now())
-
+    return ReleaseRead(
+        id=0,
+        anime_id=payload.anime_id,
+        status=payload.status,
+        released_at=payload.released_at or datetime.now(),
+    )
