@@ -13,7 +13,7 @@ export function safeLocalStorageGet<T>(key: string, fallback: T): T {
     try {
       return JSON.parse(raw) as T;
     } catch {
-      return raw as unknown as T;
+      return fallback;
     }
   } catch {
     return fallback;
