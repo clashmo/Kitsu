@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
 from typing import Any
 
 import jwt
@@ -47,7 +46,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
         raise TokenInvalidError from exc
 
 
-def create_refresh_token(_user_id: UUID) -> str:
+def create_refresh_token() -> str:
     return secrets.token_urlsafe()
 
 

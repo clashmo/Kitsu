@@ -34,7 +34,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 async def _issue_tokens(db: AsyncSession, user_id: uuid.UUID) -> TokenResponse:
     access_token = create_access_token({"sub": str(user_id)})
-    refresh_token = create_refresh_token(user_id)
+    refresh_token = create_refresh_token()
     token_hash = hash_refresh_token(refresh_token)
     expires_at = datetime.now(timezone.utc) + timedelta(
         days=settings.refresh_token_expire_days
