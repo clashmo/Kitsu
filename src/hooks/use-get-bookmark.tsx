@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
-import { safeLocalStorageGet, safeLocalStorageSet } from "@/shared/storage";
+import { getLocalStorageJSON, setLocalStorageJSON } from "@/utils/storage";
 
 type Props = {
   animeID?: string;
@@ -55,7 +55,7 @@ function useBookMarks({
       watchedRecordId: string | null;
       updatedAt: number;
     }>
-  >(() => safeLocalStorageGet(progressKey, []));
+  >(() => getLocalStorageJSON(progressKey, []));
 
   const filterParts = [];
 
@@ -133,7 +133,7 @@ function useBookMarks({
   }, [animeID, status, page, per_page, filters, auth, populate]);
 
   useEffect(() => {
-    safeLocalStorageSet(progressKey, progressQueue);
+    setLocalStorageJSON(progressKey, progressQueue);
   }, [progressKey, progressQueue]);
 
   const createOrUpdateBookMark = async (
@@ -179,10 +179,7 @@ function useBookMarks({
 
     const updatedRecordId = watchedRecordId || `${bookmarkId}-local`;
     setProgressQueue((existing) => {
-      const safeExisting = Array.isArray(existing) ? existing : [];
-      const filtered = safeExisting.filter(
-        (entry) => entry.bookmarkId !== bookmarkId,
-      );
+      const filtered = existing.filter((entry) => entry.bookmarkId !== bookmarkId);
       filtered.push({
         bookmarkId,
         watchedRecordId: updatedRecordId,
