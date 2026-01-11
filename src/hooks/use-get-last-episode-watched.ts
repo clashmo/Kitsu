@@ -1,6 +1,8 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { IWatchedAnime } from "@/types/watched-anime";
-import { getLocalStorageJSON } from "@/utils/storage";
+import { getLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
 
 export const useGetLastEpisodeWatched = (animeId: string) => {
   const [lastEpisodeWatched, setLastEpisodeWatched] = useState<string | null>(
@@ -8,7 +10,20 @@ export const useGetLastEpisodeWatched = (animeId: string) => {
   );
 
   useEffect(() => {
-    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime> | null>(
+      "watched",
+      [],
+    );
+
+    if (!Array.isArray(watchedDetails)) {
+      removeLocalStorageItem("watched");
+      setLastEpisodeWatched(null);
+      return;
+    }
 
     const anime = watchedDetails.find(
       (watchedAnime) => watchedAnime.anime.id === animeId,

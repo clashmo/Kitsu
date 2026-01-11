@@ -1,9 +1,11 @@
+"use client";
+
 import { useAuthStore } from "@/store/auth-store";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
-import { getLocalStorageJSON, setLocalStorageJSON } from "@/utils/storage";
+import { safeLocalStorageGet, safeLocalStorageSet } from "@/shared/storage";
 
 type Props = {
   animeID?: string;
@@ -46,6 +48,14 @@ function useBookMarks({
   const [bookmarks, setBookmarks] = useState<Bookmark[] | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const progressKey = "watch-progress";
+  const [progressQueue, setProgressQueue] = useState<
+    Array<{
+      bookmarkId: string;
+      watchedRecordId: string | null;
+      updatedAt: number;
+    }>
+  >(() => safeLocalStorageGet(progressKey, []));
 
   const filterParts = [];
 
@@ -122,6 +132,10 @@ function useBookMarks({
     getBookmarks();
   }, [animeID, status, page, per_page, filters, auth, populate]);
 
+  useEffect(() => {
+    safeLocalStorageSet(progressKey, progressQueue);
+  }, [progressKey, progressQueue]);
+
   const createOrUpdateBookMark = async (
     animeID: string,
     _animeTitle?: string,
@@ -163,21 +177,19 @@ function useBookMarks({
     void _episodeData;
     if (!bookmarkId) return watchedRecordId;
 
-    const progressKey = "watch-progress";
-    const existing: Array<{
-      bookmarkId: string;
-      watchedRecordId: string | null;
-      updatedAt: number;
-    }> = getLocalStorageJSON(progressKey, []);
-
     const updatedRecordId = watchedRecordId || `${bookmarkId}-local`;
-    const filtered = existing.filter((entry) => entry.bookmarkId !== bookmarkId);
-    filtered.push({
-      bookmarkId,
-      watchedRecordId: updatedRecordId,
-      updatedAt: Date.now(),
+    setProgressQueue((existing) => {
+      const safeExisting = Array.isArray(existing) ? existing : [];
+      const filtered = safeExisting.filter(
+        (entry) => entry.bookmarkId !== bookmarkId,
+      );
+      filtered.push({
+        bookmarkId,
+        watchedRecordId: updatedRecordId,
+        updatedAt: Date.now(),
+      });
+      return filtered;
     });
-    setLocalStorageJSON(progressKey, filtered);
 
     return updatedRecordId;
   };

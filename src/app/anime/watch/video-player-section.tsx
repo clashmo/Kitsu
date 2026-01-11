@@ -47,6 +47,7 @@ const VideoPlayerSection = () => {
 
   // Hydrate watchedDetails from localStorage on client side only
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const watched = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
     setWatchedDetails(watched);
   }, []);
@@ -59,6 +60,7 @@ const VideoPlayerSection = () => {
   // }
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (auth) return;
     if (!Array.isArray(watchedDetails)) {
       removeLocalStorageItem("watched");

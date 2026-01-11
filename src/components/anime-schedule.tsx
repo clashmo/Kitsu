@@ -64,14 +64,14 @@ function AnimeSchedule() {
           ))}
         </TabsList>
 
-        {isLoading ? (
+        {isLoading || !Array.isArray(data?.scheduledAnimes) ? (
           <LoadingSkeleton />
         ) : (
           daysOfWeek.map((day) => (
             <TabsContent key={day} value={day}>
               {day === currentSelectedTab && (
                 <div className="flex flex-col gap-5 w-full p-4">
-                  {data?.scheduledAnimes.map((anime) => (
+                  {data.scheduledAnimes.map((anime) => (
                     <div
                       key={anime.id}
                       className="flex items-center justify-between"

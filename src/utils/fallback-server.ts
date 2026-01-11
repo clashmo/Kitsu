@@ -1,3 +1,5 @@
+"use client";
+
 import { IEpisodeServers } from "@/types/episodes";
 import { getLocalStorageJSON } from "./storage";
 
@@ -10,6 +12,13 @@ export function getFallbackServer(serversData: IEpisodeServers | undefined): {
   serverName: string;
   key: string;
 } {
+  if (typeof window === "undefined") {
+    return {
+      serverName: "",
+      key: "",
+    };
+  }
+
   const preference = getLocalStorageJSON<Preference | null>("serverPreference", null);
 
   if (preference?.key) {

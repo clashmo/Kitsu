@@ -10,8 +10,11 @@ interface IAnimeBanner {
 }
 
 const getAnimeBanner = async (anilistID: number) => {
-  const res = await api.post("https://graphql.anilist.co", {
-    query: `
+  try {
+    const res = await api.post(
+      "https://graphql.anilist.co",
+      {
+        query: `
       query ($id: Int) {
         Media(id: $id, type: ANIME) {
           id
@@ -19,11 +22,17 @@ const getAnimeBanner = async (anilistID: number) => {
         }
       }
     `,
-    variables: {
-      id: anilistID,
-    },
-  });
-  return res.data.data as IAnimeBanner;
+        variables: {
+          id: anilistID,
+        },
+      },
+      { timeout: 10000 },
+    );
+    return res.data.data as IAnimeBanner;
+  } catch (error) {
+    console.error("Failed to fetch anime banner", error);
+    return { Media: { id: anilistID, bannerImage: "" } } as IAnimeBanner;
+  }
 };
 
 export const useGetAnimeBanner = (anilistID: number) => {
@@ -31,5 +40,6 @@ export const useGetAnimeBanner = (anilistID: number) => {
     queryFn: () => getAnimeBanner(anilistID),
     queryKey: [GET_ANIME_BANNER, anilistID],
     enabled: !!anilistID,
+    retry: false,
   });
 };

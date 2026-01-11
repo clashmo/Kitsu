@@ -8,14 +8,32 @@ const getEpisodeData = async (
   server: string | undefined,
   subOrDub: string,
 ) => {
-  const res = await axios.get("/api/episode/sources", {
-    params: {
-      animeEpisodeId: decodeURIComponent(episodeId),
-      server: server,
-      category: subOrDub,
-    },
-  });
-  return res.data.data as IEpisodeSource;
+  const fallback: IEpisodeSource = {
+    headers: { Referer: "" },
+    tracks: [],
+    intro: { start: 0, end: 0 },
+    outro: { start: 0, end: 0 },
+    sources: [],
+    anilistID: 0,
+    malID: 0,
+  };
+
+  if (!episodeId) return fallback;
+
+  try {
+    const res = await axios.get("/api/episode/sources", {
+      params: {
+        animeEpisodeId: decodeURIComponent(episodeId),
+        server: server,
+        category: subOrDub,
+      },
+      timeout: 10000,
+    });
+    return res.data.data as IEpisodeSource;
+  } catch (error) {
+    console.error("Failed to fetch episode data", error);
+    return fallback;
+  }
 };
 
 export const useGetEpisodeData = (
@@ -27,6 +45,7 @@ export const useGetEpisodeData = (
     queryFn: () => getEpisodeData(episodeId, server, subOrDub),
     queryKey: [GET_EPISODE_DATA, episodeId, server, subOrDub],
     refetchOnWindowFocus: false,
-    enabled: server !== "",
+    enabled: Boolean(episodeId) && server !== "",
+    retry: false,
   });
 };

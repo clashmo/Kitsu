@@ -3,6 +3,8 @@
  * Prevents crashes when accessing localStorage during server-side rendering
  */
 
+import { safeLocalStorageGet, safeLocalStorageSet } from "@/shared/storage";
+
 /**
  * Checks if localStorage is available (client-side only)
  */
@@ -16,15 +18,7 @@ export function isLocalStorageAvailable(): boolean {
  * @returns The value or null if not found or SSR
  */
 export function getLocalStorageItem(key: string): string | null {
-  if (!isLocalStorageAvailable()) {
-    return null;
-  }
-  try {
-    return localStorage.getItem(key);
-  } catch (error) {
-    console.error(`Error reading localStorage key "${key}":`, error);
-    return null;
-  }
+  return safeLocalStorageGet<string | null>(key, null);
 }
 
 /**
@@ -34,16 +28,11 @@ export function getLocalStorageItem(key: string): string | null {
  * @returns true if successful, false otherwise
  */
 export function setLocalStorageItem(key: string, value: string): boolean {
-  if (!isLocalStorageAvailable()) {
-    return false;
+  const ok = safeLocalStorageSet(key, value);
+  if (!ok) {
+    console.error(`Error writing localStorage key "${key}"`);
   }
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (error) {
-    console.error(`Error writing localStorage key "${key}":`, error);
-    return false;
-  }
+  return ok;
 }
 
 /**

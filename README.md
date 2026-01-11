@@ -35,7 +35,7 @@
 ## Запуск локально (обзор)
 
 1. Бэкенд: подготовить `.env` (см. `backend/README.md`), поднять PostgreSQL, применить миграции Alembic, запустить `uvicorn app.main:app --reload` или `docker compose -f backend/docker-compose.yml up backend`.
-2. Фронтенд: задать `NEXT_PUBLIC_API_URL` и `NEXT_PUBLIC_PROXY_URL`, выполнить `npm install`, затем `npm run dev`.
+2. Фронтенд: задать `NEXT_PUBLIC_API_BASE_URL` и `NEXT_PUBLIC_PROXY_URL`, выполнить `npm install`, затем `npm run dev`.
 
 ## Деплой на Render (обзор)
 
@@ -43,7 +43,7 @@
 - Предоставить управляемый PostgreSQL, применить миграции до приёма трафика.
 - Смонтировать постоянное хранилище для `backend/uploads/avatars`, иначе аватары теряются при перезапусках.
 - Настроить переменные окружения согласно `backend/README.md` и `frontend/README.md`.
-- Фронтенд должен ссылаться на публичный URL бэкенда (`NEXT_PUBLIC_API_URL`) и m3u8-прокси (`NEXT_PUBLIC_PROXY_URL`).
+- Фронтенд должен ссылаться на публичный URL бэкенда (`NEXT_PUBLIC_API_BASE_URL`) и m3u8-прокси (`NEXT_PUBLIC_PROXY_URL`).
 
 ## Дополнительная документация
 
