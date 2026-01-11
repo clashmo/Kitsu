@@ -81,7 +81,7 @@ function KitsunePlayer({
   const initialSeekTimeRef = useRef<number | null>(null);
 
   const { auth } = useAuthStore();
-  const { createOrUpdateBookMark, syncWatchProgress } = useBookMarks({
+  const { createOrUpdateBookMark, storeWatchProgressLocally } = useBookMarks({
     populate: false,
   });
 
@@ -567,7 +567,7 @@ function KitsunePlayer({
         // Immediately sync progress if min time just met and no record exists
         if (!watchedRecordIdRef.current) {
           console.log("Triggering initial sync after min watch time.");
-          syncWatchProgress(
+          storeWatchProgressLocally(
             bookmarkIdRef.current,
             null, // Force creation attempt
             {
@@ -593,7 +593,7 @@ function KitsunePlayer({
       ) {
         // Call sync directly now, timer approach less reliable with state/refs
         // console.log("Updating progress via interval check")
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
+        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
           episodeId: serversData.episodeId,
           episodeNumber: parseInt(serversData.episodeNo),
           current: currentTime,
@@ -672,7 +672,7 @@ function KitsunePlayer({
         console.log("Syncing progress on pause/seek.");
         // Clear any pending throttled update
         if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
+        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
           episodeId: serversData.episodeId,
           episodeNumber: parseInt(serversData.episodeNo),
           current: art.currentTime,
@@ -719,7 +719,7 @@ function KitsunePlayer({
       ) {
         console.log("Syncing final progress on unmount.");
         // Use current values directly
-        syncWatchProgress(bookmarkIdRef.current, watchedRecordIdRef.current, {
+        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
           episodeId: serversData.episodeId,
           episodeNumber: parseInt(serversData.episodeNo),
           current: art.currentTime,

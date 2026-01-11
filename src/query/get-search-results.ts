@@ -36,6 +36,7 @@ const searchAnime = async (params: SearchAnimeParams) => {
     currentPage,
     Math.ceil((offset + animes.length) / limit),
   );
+  // Backend does not return total count; totalPages is an estimate based on fetched items
   return {
     animes,
     totalPages: estimatedTotal,

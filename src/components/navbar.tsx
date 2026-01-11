@@ -83,8 +83,7 @@ const NavBar = () => {
       }
     };
     refreshAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [auth.auth?.refreshToken]);
 
   return (
     <div

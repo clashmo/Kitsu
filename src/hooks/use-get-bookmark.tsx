@@ -154,7 +154,7 @@ function useBookMarks({
     }
   };
 
-  const syncWatchProgress = async (
+  const storeWatchProgressLocally = async (
     bookmarkId: string | null,
     watchedRecordId: string | null,
   ): Promise<string | null> => {
@@ -181,7 +181,7 @@ function useBookMarks({
 
   return {
     bookmarks,
-    syncWatchProgress,
+    storeWatchProgressLocally,
     createOrUpdateBookMark,
     totalPages,
     isLoading,

@@ -50,6 +50,15 @@ const extractTokens = (payload: TokenPayload) => {
   return { accessToken, refreshToken };
 };
 
+const resolveAccessToken = (tokens: ReturnType<typeof extractTokens>) => {
+  const fallbackToken = useAuthStore.getState().auth?.accessToken || null;
+  if (!tokens.accessToken && fallbackToken) {
+    // eslint-disable-next-line no-console
+    console.warn("Using existing access token because refresh returned none");
+  }
+  return tokens.accessToken || fallbackToken;
+};
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().auth?.accessToken;
   if (token) {
@@ -95,10 +104,6 @@ api.interceptors.response.use(
           refresh_token: refreshToken,
         });
         const tokens = extractTokens(data as TokenPayload);
-        if (!tokens.accessToken && useAuthStore.getState().auth?.accessToken) {
-          // eslint-disable-next-line no-console
-          console.warn("Using existing access token because refresh returned none");
-        }
         const updatedAuth = useAuthStore.getState().auth;
         if (updatedAuth) {
           useAuthStore
@@ -110,7 +115,7 @@ api.interceptors.response.use(
             });
         }
         // Prefer freshly issued token; fall back to stored token if backend omitted it
-        const newToken = tokens.accessToken || useAuthStore.getState().auth?.accessToken || null;
+        const newToken = resolveAccessToken(tokens);
         if (!newToken) {
           processQueue(new Error("No token returned from refresh"), null);
           useAuthStore.getState().clearAuth();
