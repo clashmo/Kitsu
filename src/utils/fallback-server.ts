@@ -1,4 +1,5 @@
 import { IEpisodeServers } from "@/types/episodes";
+import { getLocalStorageJSON } from "./storage";
 
 type Preference = {
   server: string;
@@ -9,18 +10,15 @@ export function getFallbackServer(serversData: IEpisodeServers | undefined): {
   serverName: string;
   key: string;
 } {
-  const preference = localStorage.getItem("serverPreference");
+  const preference = getLocalStorageJSON<Preference | null>("serverPreference", null);
 
-  if (preference) {
-    const parsedPreference = JSON.parse(preference) as Preference;
-    if (parsedPreference?.key) {
-      const serverList = serversData?.[parsedPreference.key];
-      if (serverList && serverList[0]?.serverName) {
-        return {
-          serverName: serverList[0].serverName,
-          key: parsedPreference.key,
-        };
-      }
+  if (preference?.key) {
+    const serverList = serversData?.[preference.key];
+    if (serverList && serverList[0]?.serverName) {
+      return {
+        serverName: serverList[0].serverName,
+        key: preference.key,
+      };
     }
   }
 

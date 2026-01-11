@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
+import { getLocalStorageJSON, setLocalStorageJSON } from "@/utils/storage";
 
 type Props = {
   animeID?: string;
@@ -160,14 +161,14 @@ function useBookMarks({
     _episodeData?: unknown,
   ): Promise<string | null> => {
     void _episodeData;
-    if (typeof window === "undefined" || !bookmarkId) return watchedRecordId;
+    if (!bookmarkId) return watchedRecordId;
 
     const progressKey = "watch-progress";
     const existing: Array<{
       bookmarkId: string;
       watchedRecordId: string | null;
       updatedAt: number;
-    }> = JSON.parse(localStorage.getItem(progressKey) || "[]");
+    }> = getLocalStorageJSON(progressKey, []);
 
     const updatedRecordId = watchedRecordId || `${bookmarkId}-local`;
     const filtered = existing.filter((entry) => entry.bookmarkId !== bookmarkId);
@@ -176,7 +177,7 @@ function useBookMarks({
       watchedRecordId: updatedRecordId,
       updatedAt: Date.now(),
     });
-    localStorage.setItem(progressKey, JSON.stringify(filtered));
+    setLocalStorageJSON(progressKey, filtered);
 
     return updatedRecordId;
   };
