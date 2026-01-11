@@ -13,7 +13,7 @@ class Settings(BaseModel):
     database_url: str = Field(
         default="postgresql+asyncpg://kitsu:kitsu@db:5432/kitsu"
     )
-    allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
+    allowed_origins: list[str] = Field(default_factory=list)
     secret_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=14)
@@ -25,17 +25,28 @@ class Settings(BaseModel):
         if not secret_key:
             raise ValueError("SECRET_KEY environment variable must be set")
 
+        raw_allowed_origins = os.getenv("ALLOWED_ORIGINS", "").strip()
+        if not raw_allowed_origins:
+            raise ValueError("ALLOWED_ORIGINS environment variable must be set")
+
+        allowed_origins = [
+            origin.strip() for origin in raw_allowed_origins.split(",") if origin.strip()
+        ]
+        if not allowed_origins:
+            raise ValueError("ALLOWED_ORIGINS must contain at least one origin")
+
+        if "*" in allowed_origins:
+            raise ValueError(
+                "ALLOWED_ORIGINS cannot contain '*' when allow_credentials is enabled"
+            )
+
         return cls(
             app_name=os.getenv("APP_NAME", cls.model_fields["app_name"].default),
             debug=os.getenv("DEBUG", "false").lower() == "true",
             database_url=os.getenv(
                 "DATABASE_URL", cls.model_fields["database_url"].default
             ),
-            allowed_origins=[
-                origin.strip()
-                for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
-                if origin.strip()
-            ],
+            allowed_origins=allowed_origins,
             secret_key=secret_key,
             access_token_expire_minutes=int(
                 os.getenv(
