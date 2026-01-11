@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_current_user, get_db
 from ..models.user import User
 from ..schemas.user import UserCreate, UserRead
+from ..utils.files import delete_avatar_file, save_avatar_file
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -14,6 +15,30 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user),
 ) -> UserRead:
+    return current_user
+
+
+@router.patch("/me", response_model=UserRead)
+async def update_current_user_profile(
+    avatar: UploadFile | None = File(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserRead:
+    if avatar is None:
+        return current_user
+
+    if not avatar.content_type or not avatar.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only image uploads are allowed.",
+        )
+
+    if current_user.avatar:
+        delete_avatar_file(current_user.avatar)
+
+    current_user.avatar = await save_avatar_file(avatar)
+    await db.commit()
+    await db.refresh(current_user)
     return current_user
 
 
