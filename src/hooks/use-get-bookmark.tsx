@@ -123,6 +123,9 @@ function useBookMarks({
 
   const createOrUpdateBookMark = async (
     animeID: string,
+    _animeTitle?: string,
+    _animeThumbnail?: string,
+    _status?: string,
     showToast: boolean = true,
   ): Promise<string | null> => {
     if (!auth) {
@@ -151,10 +154,12 @@ function useBookMarks({
     }
   };
 
-  const storeWatchProgressLocally = async (
+  const syncWatchProgress = async (
     bookmarkId: string | null,
     watchedRecordId: string | null,
+    _episodeData?: unknown,
   ): Promise<string | null> => {
+    void _episodeData;
     if (typeof window === "undefined" || !bookmarkId) return watchedRecordId;
 
     const progressKey = "watch-progress";
@@ -178,7 +183,7 @@ function useBookMarks({
 
   return {
     bookmarks,
-    storeWatchProgressLocally,
+    syncWatchProgress,
     createOrUpdateBookMark,
     totalPages,
     isLoading,
