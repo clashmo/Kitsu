@@ -21,8 +21,6 @@ function NavbarAvatar({ auth }: Props) {
           <Avatar
             username={auth.auth.username || auth.auth.email}
             url={auth.auth.avatar}
-            id={auth.auth.id}
-            collectionID={auth.auth.collectionId}
           />
         </PopoverTrigger>
         <PopoverContent className="bg-black bg-opacity-50 backdrop-blur-sm w-[200px] mt-4 mr-4 text-sm flex flex-col space-y-2">
