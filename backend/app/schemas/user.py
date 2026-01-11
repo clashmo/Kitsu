@@ -1,11 +1,11 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserBase(BaseModel):
     email: EmailStr
-    is_active: bool = Field(default=True)
 
 
 class UserCreate(UserBase):
@@ -13,7 +13,8 @@ class UserCreate(UserBase):
 
 
 class UserRead(UserBase):
-    id: int
+    id: UUID
+    is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
