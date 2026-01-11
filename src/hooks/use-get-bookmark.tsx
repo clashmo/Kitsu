@@ -77,11 +77,17 @@ function useBookMarks({
           created_at?: string;
         }>;
 
+        type BackendAnime = {
+          id: string;
+          title: string;
+          poster?: string | null;
+        };
+
         const detailed = await Promise.all(
           favorites.map(async (fav) => {
             try {
-              const animeRes = await api.get(`/anime/${fav.anime_id}`);
-              return { fav, anime: animeRes.data as any };
+              const animeRes = await api.get<BackendAnime>(`/anime/${fav.anime_id}`);
+              return { fav, anime: animeRes.data };
             } catch {
               return { fav, anime: null };
             }

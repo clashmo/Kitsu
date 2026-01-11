@@ -69,7 +69,7 @@ const Page = () => {
     setFavoriteLoading(true);
     try {
       if (isFavorite && favoriteId) {
-        await api.delete(`/favorites/${slug}`);
+        await api.delete(`/favorites/${favoriteId}`);
         setIsFavorite(false);
         setFavoriteId(null);
         toast.success("Removed from favorites", {

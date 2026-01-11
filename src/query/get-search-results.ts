@@ -31,10 +31,15 @@ const searchAnime = async (params: SearchAnimeParams) => {
     rank: undefined,
   }));
 
+  const hasNextPage = animes.length === limit;
+  const estimatedTotal = Math.max(
+    currentPage,
+    Math.ceil((offset + animes.length) / limit),
+  );
   return {
     animes,
-    totalPages: animes.length ? currentPage + 1 : currentPage,
-    hasNextPage: animes.length === limit,
+    totalPages: hasNextPage ? estimatedTotal + 1 : estimatedTotal,
+    hasNextPage,
     currentPage,
   } as IAnimeSearch;
 };

@@ -70,7 +70,7 @@ function LoginPopoverButton() {
       });
     } catch (e) {
       console.error("Login error:", e);
-      toast.error("Invalid username or password", {
+      toast.error("Invalid email or password", {
         style: { background: "red" },
       });
     }

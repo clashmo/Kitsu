@@ -12,6 +12,8 @@ type BackendAnime = {
   year?: number | null;
 };
 
+type AnimeStatus = "ongoing" | "completed" | "hiatus" | string;
+
 const mapAnimeList = (animes: BackendAnime[]) =>
   animes.map((anime) => ({
     id: anime.id,
@@ -19,7 +21,7 @@ const mapAnimeList = (animes: BackendAnime[]) =>
     jname: anime.title_original || anime.title,
     poster: PLACEHOLDER_POSTER,
     episodes: { sub: null, dub: null },
-    type: (anime.status as any) || undefined,
+    type: (anime.status as AnimeStatus) || undefined,
     rank: undefined,
   }));
 

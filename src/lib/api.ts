@@ -12,6 +12,14 @@ const authClient = axios.create({
   baseURL,
 });
 
+type TokenPayload = {
+  access_token?: string;
+  accessToken?: string;
+  token?: string;
+  refresh_token?: string;
+  refreshToken?: string;
+};
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -27,6 +35,19 @@ const processQueue = (error: unknown, token: string | null = null) => {
     }
   });
   failedQueue = [];
+};
+
+const extractTokens = (payload: TokenPayload) => {
+  const accessToken =
+    payload?.access_token ||
+    payload?.accessToken ||
+    payload?.token ||
+    "";
+  const refreshToken =
+    payload?.refresh_token ||
+    payload?.refreshToken ||
+    "";
+  return { accessToken, refreshToken };
 };
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -73,30 +94,19 @@ api.interceptors.response.use(
         const { data } = await authClient.post("/auth/refresh", {
           refresh_token: refreshToken,
         });
+        const tokens = extractTokens(data as TokenPayload);
         const updatedAuth = useAuthStore.getState().auth;
         if (updatedAuth) {
           useAuthStore
             .getState()
             .setAuth({
               ...updatedAuth,
-              accessToken:
-                (data as any).access_token ||
-                data.access_token ||
-                (data as any).accessToken ||
-                "",
-              refreshToken:
-                (data as any).refresh_token ||
-                data.refresh_token ||
-                (data as any).refreshToken ||
-                "",
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
             });
         }
-        const newToken =
-          (data as any).access_token ||
-          (data as any).accessToken ||
-          (data as any).token ||
-          useAuthStore.getState().auth?.accessToken ||
-          null;
+        // Prefer freshly issued token; fall back to stored token if backend omitted it
+        const newToken = tokens.accessToken || useAuthStore.getState().auth?.accessToken || null;
         processQueue(null, newToken);
         if (originalRequest.headers && newToken) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
