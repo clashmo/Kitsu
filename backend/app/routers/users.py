@@ -39,10 +39,13 @@ async def update_current_user_profile(
     current_user.avatar = new_avatar_path
     try:
         await db.commit()
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
         await db.rollback()
         delete_avatar_file(new_avatar_path)
-        raise
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not update profile.",
+        ) from exc
     await db.refresh(current_user)
 
     if previous_avatar:

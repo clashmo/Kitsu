@@ -1,4 +1,3 @@
-import imghdr
 import secrets
 from pathlib import Path
 
@@ -8,7 +7,6 @@ from fastapi import UploadFile
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _AVATAR_DIR = _BASE_DIR / "uploads" / "avatars"
 _MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5 MB
-_ALLOWED_IMAGE_TYPES = {"jpeg", "png", "gif", "bmp", "webp"}
 _HEADER_BYTES = 1024
 _CHUNK_SIZE = 1024 * 1024
 
@@ -22,6 +20,20 @@ def _generate_avatar_name(original_name: str | None) -> str:
     return f"{secrets.token_hex(16)}{suffix}"
 
 
+def _is_allowed_image(header: bytes) -> bool:
+    if header.startswith(b"\xff\xd8\xff"):  # JPEG
+        return True
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):  # PNG
+        return True
+    if header.startswith(b"GIF8"):  # GIF
+        return True
+    if header.startswith(b"BM"):  # BMP
+        return True
+    if header.startswith(b"RIFF") and b"WEBP" in header[8:16]:  # WEBP
+        return True
+    return False
+
+
 async def save_avatar_file(upload: UploadFile) -> str:
     _ensure_avatar_dir()
     filename = _generate_avatar_name(upload.filename)
@@ -31,8 +43,7 @@ async def save_avatar_file(upload: UploadFile) -> str:
     header = await upload.read(_HEADER_BYTES)
     if not header:
         raise ValueError("Empty file upload.")
-    detected_type = imghdr.what(None, h=header)
-    if detected_type not in _ALLOWED_IMAGE_TYPES:
+    if not _is_allowed_image(header):
         raise ValueError("Invalid image upload.")
 
     total_bytes = len(header)
@@ -60,7 +71,9 @@ async def save_avatar_file(upload: UploadFile) -> str:
 def delete_avatar_file(path_str: str) -> None:
     candidate = (_BASE_DIR / path_str).resolve()
     avatar_root = _AVATAR_DIR.resolve()
-    if not candidate.is_relative_to(avatar_root):
+    try:
+        candidate.relative_to(avatar_root)
+    except ValueError:
         return
     if candidate.exists():
         candidate.unlink()
