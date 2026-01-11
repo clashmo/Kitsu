@@ -15,6 +15,7 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: UUID
     is_active: bool
+    avatar: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
