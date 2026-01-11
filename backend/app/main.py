@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .routers import (
@@ -14,6 +17,10 @@ from .routers import (
     views,
 )
 
+AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
+AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+
+
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
 app.add_middleware(
@@ -22,6 +29,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.mount(
+    "/media/avatars",
+    StaticFiles(directory=AVATAR_DIR, html=False),
+    name="avatars",
 )
 
 routers = [
