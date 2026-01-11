@@ -14,7 +14,7 @@ type Props = {
 };
 
 interface WatchedAnime extends IAnime {
-  episode: WatchHistory | string;
+  episode: string;
 }
 
 const ContinueWatching = (props: Props) => {
@@ -64,10 +64,8 @@ const ContinueWatching = (props: Props) => {
                   title={ani.name}
                   poster={ani.poster}
                   className="self-center justify-self-center"
-                  href={`${ROUTES.WATCH}?anime=${ani.id}&episode=${typeof ani.episode !== "string" ? ani.episode.episodeId : ani.episode}`}
-                  watchDetail={
-                    typeof ani.episode !== "string" ? ani.episode : null
-                  }
+                  href={`${ROUTES.WATCH}?anime=${ani.id}&episode=${ani.episode}`}
+                  watchDetail={null}
                 />
               </BlurFade>
             ),

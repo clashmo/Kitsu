@@ -4,14 +4,11 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { env } from "next-runtime-env";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
 
 type Props = {
   url?: string;
   username?: string;
-  collectionID?: string;
-  id?: string;
   className?: string;
   onClick?: () => void;
 };
@@ -19,16 +16,10 @@ type Props = {
 function Avatar({
   url,
   username,
-  id,
   className,
-  collectionID,
   onClick,
 }: Props) {
-  const base = env("NEXT_PUBLIC_POCKETBASE_URL");
-  const src =
-    url && base && collectionID && id
-      ? `${base}/api/files/${collectionID}/${id}/${url}`
-      : PLACEHOLDER_POSTER;
+  const src = url || PLACEHOLDER_POSTER;
 
   return (
     <AvatarCN className={className} onClick={onClick}>

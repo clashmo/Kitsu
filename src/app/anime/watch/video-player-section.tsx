@@ -12,7 +12,6 @@ import { AlertCircleIcon } from "lucide-react";
 // import { Button } from "@/components/ui/button";
 // import { Switch } from "@/components/ui/switch";
 import { useAuthStore } from "@/store/auth-store";
-// import { pb } from "@/lib/pocketbase";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSearchParams } from "next/navigation";
 
@@ -52,20 +51,6 @@ const VideoPlayerSection = () => {
   //   setKey(key);
   //   const preference = { serverName, key };
   //   localStorage.setItem("serverPreference", JSON.stringify(preference));
-  // }
-
-  // async function onHandleAutoSkipChange(value: boolean) {
-  //   setAutoSkip(value);
-  //   if (!auth) {
-  //     localStorage.setItem("autoSkip", JSON.stringify(value));
-  //     return;
-  //   }
-  //   const res = await pb.collection("users").update(auth.id, {
-  //     autoSkip: value,
-  //   });
-  //   if (res) {
-  //     setAuth({ ...auth, autoSkip: value });
-  //   }
   // }
 
   useEffect(() => {

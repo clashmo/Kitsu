@@ -73,7 +73,6 @@ function AnilistImport() {
         return;
       }
 
-      // update in pb
       const animeList = data.animes;
       for (const anime of animeList) {
         await bookmark.createOrUpdateBookMark(
