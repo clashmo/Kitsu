@@ -9,6 +9,8 @@ _BASE_DIR = Path(__file__).resolve().parents[2]
 _AVATAR_DIR = _BASE_DIR / "uploads" / "avatars"
 _MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5 MB
 _ALLOWED_IMAGE_TYPES = {"jpeg", "png", "gif", "bmp", "webp"}
+_HEADER_BYTES = 1024
+_CHUNK_SIZE = 1024 * 1024
 
 
 def _ensure_avatar_dir() -> None:
@@ -26,9 +28,11 @@ async def save_avatar_file(upload: UploadFile) -> str:
     destination = _AVATAR_DIR / filename
     total_bytes = 0
 
-    header = await upload.read(1024)
+    header = await upload.read(_HEADER_BYTES)
     if not header:
         raise ValueError("Empty file upload.")
+    if len(header) > _MAX_AVATAR_SIZE:
+        raise ValueError("Avatar file is too large.")
 
     detected_type = imghdr.what(None, h=header)
     if detected_type not in _ALLOWED_IMAGE_TYPES:
@@ -42,7 +46,7 @@ async def save_avatar_file(upload: UploadFile) -> str:
                 raise ValueError("Avatar file is too large.")
 
             while True:
-                chunk = await upload.read(1024 * 1024)
+                chunk = await upload.read(_CHUNK_SIZE)
                 if not chunk:
                     break
                 total_bytes += len(chunk)
