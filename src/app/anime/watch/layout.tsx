@@ -101,7 +101,13 @@ const Layout = (props: Props) => {
     setFavoriteLoading(true);
     try {
       if (isFavorite) {
-        await api.delete(`/favorites/${favoriteId ?? animeId}`);
+        if (!favoriteId) {
+          toast.error("Favorite not found to remove", {
+            style: { background: "red" },
+          });
+          return;
+        }
+        await api.delete(`/favorites/${favoriteId}`);
         setIsFavorite(false);
         setFavoriteId(null);
         toast.success("Removed from favorites", {

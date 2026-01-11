@@ -158,7 +158,25 @@ function useBookMarks({
     bookmarkId: string | null,
     watchedRecordId: string | null,
   ): Promise<string | null> => {
-    return watchedRecordId;
+    if (typeof window === "undefined" || !bookmarkId) return watchedRecordId;
+
+    const progressKey = "watch-progress";
+    const existing: Array<{
+      bookmarkId: string;
+      watchedRecordId: string | null;
+      updatedAt: number;
+    }> = JSON.parse(localStorage.getItem(progressKey) || "[]");
+
+    const updatedRecordId = watchedRecordId || `${bookmarkId}-local`;
+    const filtered = existing.filter((entry) => entry.bookmarkId !== bookmarkId);
+    filtered.push({
+      bookmarkId,
+      watchedRecordId: updatedRecordId,
+      updatedAt: Date.now(),
+    });
+    localStorage.setItem(progressKey, JSON.stringify(filtered));
+
+    return updatedRecordId;
   };
 
   return {

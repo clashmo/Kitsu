@@ -38,7 +38,7 @@ const searchAnime = async (params: SearchAnimeParams) => {
   );
   return {
     animes,
-    totalPages: hasNextPage ? estimatedTotal + 1 : estimatedTotal,
+    totalPages: estimatedTotal,
     hasNextPage,
     currentPage,
   } as IAnimeSearch;
