@@ -123,9 +123,6 @@ function useBookMarks({
 
   const createOrUpdateBookMark = async (
     animeID: string,
-    animeTitle: string,
-    animeThumbnail: string,
-    status: string,
     showToast: boolean = true,
   ): Promise<string | null> => {
     if (!auth) {

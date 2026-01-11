@@ -32,11 +32,11 @@ const searchAnime = async (params: SearchAnimeParams) => {
   }));
 
   const hasNextPage = animes.length === limit;
-  const estimatedTotal = Math.max(
-    currentPage,
-    Math.ceil((offset + animes.length) / limit),
-  );
-  // Backend does not return total count; totalPages is an estimate based on fetched items
+  const estimatedTotal =
+    animes.length === 0 || animes.length < limit
+      ? currentPage
+      : currentPage + 1;
+  // Backend does not return total count; totalPages is a conservative estimate based on fetched items
   return {
     animes,
     totalPages: estimatedTotal,

@@ -131,9 +131,6 @@ function KitsunePlayer({
     const fetchBookmarkAndWatchedId = async () => {
       const id = await createOrUpdateBookMark(
         animeInfo.id,
-        animeInfo.title,
-        animeInfo.image,
-        "watching",
         false,
       );
 

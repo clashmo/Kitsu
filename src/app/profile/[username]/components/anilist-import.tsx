@@ -78,9 +78,6 @@ function AnilistImport() {
       for (const anime of animeList) {
         await bookmark.createOrUpdateBookMark(
           anime.id,
-          anime.title,
-          anime.thumbnail,
-          anime.status,
           false,
         );
       }

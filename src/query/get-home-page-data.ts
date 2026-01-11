@@ -42,6 +42,7 @@ const getHomePageData = async () => {
     otherInfo: [],
   }));
 
+  // Backend currently exposes a single anime list; reuse it across sections until dedicated endpoints exist
   return {
     spotlightAnimes,
     trendingAnimes: mapped,

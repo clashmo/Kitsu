@@ -110,8 +110,8 @@ api.interceptors.response.use(
             .getState()
             .setAuth({
               ...updatedAuth,
-              accessToken: tokens.accessToken,
-              refreshToken: tokens.refreshToken,
+              accessToken: tokens.accessToken || updatedAuth.accessToken,
+              refreshToken: tokens.refreshToken || updatedAuth.refreshToken,
             });
         }
         // Prefer freshly issued token; fall back to stored token only when backend omits tokens
