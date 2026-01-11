@@ -1,22 +1,22 @@
-# Roadmap
+# Дорожная карта
 
-## Phase 1 — MVP (current)
-- Solidify auth flow (login/register/refresh/logout in UI + backend)
-- Wire frontend to FastAPI for anime list/search/favorites/profile
-- Replace PocketBase remnants and align env vars (API/proxy)
-- Document and automate migrations for production; configure CORS and secrets
-- Persist avatars via mounted storage
-- Out of scope for this phase: analytics, multi-device refresh tokens, and CDN
+## Фаза 1 — MVP (текущее состояние)
+- Завершить поток аутентификации (login/register/refresh/logout) в UI и на бэкенде.
+- Подключить фронтенд к FastAPI для каталога/поиска/избранного/профиля.
+- Убрать оставшиеся следы PocketBase и унифицировать переменные окружения (API/proxy).
+- Задокументировать и автоматизировать миграции для продакшна; настроить CORS и секреты.
+- Обеспечить постоянное хранилище для `uploads/avatars`.
+- Вне рамок MVP: аналитика, многосессионные refresh-токены, CDN.
 
-## Phase 2 — Post-MVP Hardening
-- Expand backend features: releases/episodes/watch history and views
-- Improve error handling and UX for backend outages
-- Add logging/metrics, rate limiting, and DB health checks
-- Clean up hybrid data sources; align IDs between backend and scraper pathways
-- Introduce CI for lint/test/build and migration checks
+## Фаза 2 — Post-MVP
+- Расширить функциональность бэкенда: релизы/эпизоды/история просмотров и счетчики.
+- Улучшить обработку ошибок и UX при недоступности бэкенда.
+- Добавить логирование/метрики, rate limiting и проверки здоровья БД.
+- Свести гибридные источники данных, выровнять идентификаторы между бэкендом и скрейперами.
+- Ввести CI для lint/test/build и проверки миграций.
 
-## Phase 3 — Future
-- Multi-session token support and device management
-- Media/proxy/CDN strategy and caching
-- Advanced recommendations/analytics
-- Performance tuning and scaling guidance
+## Фаза 3 — Будущее/production hardening
+- Поддержка нескольких сессий и управление устройствами.
+- Стратегия медиа/прокси/CDN и кэширование.
+- Расширенные рекомендации и аналитика.
+- Оптимизация производительности и масштабирование.

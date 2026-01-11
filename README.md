@@ -2,65 +2,51 @@
 
 # Kitsu
 
-An open-source anime streaming web app in pre-production/MVP stabilization. The stack is split between a FastAPI backend (authoritative API) and a Next.js frontend. The legacy PocketBase backend is **deprecated and not used**.
+Открытый веб‑сервис для поиска и просмотра аниме. Текущий статус: MVP/предпродакшн-стабилизация. Авторитетный API реализован на FastAPI; фронтенд — Next.js. Исторический PocketBase **устарел и удалён из потока данных**.
 
-## Architecture (text)
+## Архитектура
 
 ```
-[Next.js Frontend] --(REST/JSON over HTTP(S))--> [FastAPI Backend] --(SQLAlchemy)--> [PostgreSQL]
+[Next.js фронтенд] --(REST/JSON)--> [FastAPI бэкенд] --(SQLAlchemy)--> [PostgreSQL]
         |
-        +--(HiAnime scraper via Next API routes for media sources)
+        +--(HiAnime скрейпер через Next API routes для источников воспроизведения)
 
-[Static uploads] served from FastAPI /media/avatars (local filesystem; no CDN)
+[Загрузки/аватары] FastAPI раздаёт по /media/avatars c локальной ФС (без CDN)
 ```
 
-## Tech Stack
+Фронтенд не работает без доступного FastAPI: большинство страниц и воспроизведение требуют активного бэкенда и прокси для m3u8.
 
-- Frontend: Next.js 15, React 18, Tailwind, shadcn/ui, React Query, Axios
-- Backend: FastAPI, SQLAlchemy 2 (async), Alembic, PostgreSQL
-- Misc: next-runtime-env, ArtPlayer/HLS, HiAnime scraper helper
+## Технологический стек
 
-## Repository Structure
+- Бэкенд: FastAPI, SQLAlchemy 2 (async), Alembic, PostgreSQL
+- Фронтенд: Next.js 15 (app router), React 18, Tailwind, shadcn/ui, React Query, Axios
+- Прочее: next-runtime-env, ArtPlayer + HLS.js, вспомогательные скрейперы HiAnime
 
-- `src/` – Next.js app (frontend)
-- `backend/` – FastAPI service (backend)
-- `docker-compose.yml` – legacy compose (frontend + proxy only; PocketBase deprecated)
-- `backend/docker-compose.yml` – backend + Postgres compose
-- `Dockerfile` – frontend image
-- `backend/Dockerfile` – backend image
-- `docs/` – legacy artifacts
+## Структура репозитория
 
-## Running the project (high-level)
+- `backend/` — FastAPI-сервис и миграции Alembic
+- `src/` — код Next.js фронтенда
+- `Dockerfile` — образ фронтенда
+- `backend/Dockerfile` — образ бэкенда
+- `backend/docker-compose.yml` — бэкенд + PostgreSQL для локалки
+- `docker-compose.yml` — устаревший compose для фронтенда/прокси (без PocketBase)
+- `docs/` — легаси-артефакты
 
-### Local (recommended)
+## Запуск локально (обзор)
 
-1) Backend  
-   - Copy `backend/.env.example` to `backend/.env` and set required variables (see `backend/README.md`).  
-   - Start Postgres (e.g., `docker compose -f backend/docker-compose.yml up db`).  
-   - Run migrations: `docker compose -f backend/docker-compose.yml run --rm backend alembic upgrade head`.  
-   - Start API: `uvicorn app.main:app --reload` (or `docker compose up backend`).
+1. Бэкенд: подготовить `.env` (см. `backend/README.md`), поднять PostgreSQL, применить миграции Alembic, запустить `uvicorn app.main:app --reload` или `docker compose -f backend/docker-compose.yml up backend`.
+2. Фронтенд: задать `NEXT_PUBLIC_API_URL` и `NEXT_PUBLIC_PROXY_URL`, выполнить `npm install`, затем `npm run dev`.
 
-2) Frontend  
-   - Set `NEXT_PUBLIC_API_URL` to the FastAPI URL and `NEXT_PUBLIC_PROXY_URL` for the m3u8 proxy.  
-   - `npm install`  
-   - `npm run dev`
+## Деплой на Render (обзор)
 
-The frontend depends on the backend API; it will not function correctly without it.
+- Собрать отдельные образы фронтенда и бэкенда из соответствующих Dockerfile.
+- Предоставить управляемый PostgreSQL, применить миграции до приёма трафика.
+- Смонтировать постоянное хранилище для `backend/uploads/avatars`, иначе аватары теряются при перезапусках.
+- Настроить переменные окружения согласно `backend/README.md` и `frontend/README.md`.
+- Фронтенд должен ссылаться на публичный URL бэкенда (`NEXT_PUBLIC_API_URL`) и m3u8-прокси (`NEXT_PUBLIC_PROXY_URL`).
 
-### Production / Render (overview)
+## Дополнительная документация
 
-- Build Docker images using the provided Dockerfiles (frontend and backend separately).  
-- Provision PostgreSQL and apply Alembic migrations before serving traffic.  
-- Mount persistent storage for `backend/uploads/avatars` or accept avatar loss on redeploy.  
-- Configure env vars on Render: see backend/frontend READMEs for required keys.  
-- Serve frontend with `NEXT_PUBLIC_API_URL` pointing to the backend’s public URL and `NEXT_PUBLIC_PROXY_URL` set to your HLS proxy.
-
-## PocketBase Status
-
-PocketBase is deprecated and not used. The authoritative backend is FastAPI.
-
-## Further documentation
-
-- Backend: [`backend/README.md`](backend/README.md)
-- Frontend: [`frontend/README.md`](frontend/README.md)
-- Roadmap: [`ROADMAP.md`](ROADMAP.md)
+- [`backend/README.md`](backend/README.md)
+- [`frontend/README.md`](frontend/README.md)
+- [`ROADMAP.md`](ROADMAP.md)

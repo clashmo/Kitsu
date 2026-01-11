@@ -1,35 +1,37 @@
 # Kitsu Backend
 
-FastAPI service providing the authoritative API for the Kitsu frontend. Uses PostgreSQL via async SQLAlchemy 2.x and Alembic migrations. Legacy PocketBase is deprecated.
+Авторитетный API для фронтенда Kitsu. FastAPI предоставляет REST эндпоинты, работает с PostgreSQL через async SQLAlchemy 2.x и миграции Alembic. Исторический PocketBase не используется.
 
-## Tech Stack
+## Назначение и зона ответственности
 
-- FastAPI
+- Аутентификация/авторизация, выпуск access/refresh токенов.
+- Каталог аниме, поиск, коллекции, избранное, просмотры.
+- Выдача и сохранение аватаров пользователей по HTTP (`/media/avatars`).
+
+## Технологии
+
+- FastAPI, Uvicorn
 - SQLAlchemy 2 (async) + asyncpg
 - Alembic
 - PyJWT, passlib (bcrypt)
-- Uvicorn
 
-## Environment Variables (complete)
+## Переменные окружения (полный список)
 
-Copy `.env.example` to `.env` and set the following:
+Скопируйте `.env.example` в `.env` и задайте значения:
 
-- `SECRET_KEY` (required) – JWT signing key. Backend refuses to start if missing.
-- `DATABASE_URL` – e.g., `postgresql+asyncpg://USER:PASS@HOST:PORT/DB`.
-  - Docker Compose: set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`; the compose file constructs `DATABASE_URL`.
-  - Local runs: set `DATABASE_URL` directly.
-- `ACCESS_TOKEN_EXPIRE_MINUTES` – default 30
-- `REFRESH_TOKEN_EXPIRE_DAYS` – default 14
-- `ALGORITHM` – default `HS256`
-- `ALLOWED_ORIGINS` – comma-separated list for CORS (must not be `*` when sending credentials)
-- `DEBUG` – `true`/`false` (enables SQL echo)
-- `APP_NAME` (optional)
+- `SECRET_KEY` — обязательный ключ подписи JWT; без него сервис не стартует.
+- `DATABASE_URL` — строка подключения `postgresql+asyncpg://USER:PASS@HOST:PORT/DB`.
+  - Для `backend/docker-compose.yml` можно вместо этого задать `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — compose соберёт `DATABASE_URL` автоматически.
+- `ACCESS_TOKEN_EXPIRE_MINUTES` — время жизни access-токена в минутах (по умолчанию 30).
+- `REFRESH_TOKEN_EXPIRE_DAYS` — срок жизни refresh-токена в днях (по умолчанию 14).
+- `ALGORITHM` — алгоритм подписи JWT, по умолчанию `HS256`.
+- `ALLOWED_ORIGINS` — список для CORS, через запятую. Для продакшна указывайте конкретные домены.
+- `DEBUG` — `true`/`false`, включает отладочный вывод и SQL echo.
 
-In `backend/docker-compose.yml`, the `DATABASE_URL` environment value uses shell-style interpolation of `DB_*` variables (see the `environment` block for the backend service). Provide either a full `DATABASE_URL` or the individual `DB_*` values before starting the stack.
-
-## Running Locally (without Docker)
+## Локальный запуск (без Docker)
 
 ```bash
+cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
@@ -39,32 +41,30 @@ export DATABASE_URL="postgresql+asyncpg://kitsu:kitsu@localhost:5432/kitsu"
 uvicorn app.main:app --reload
 ```
 
-## Running with Docker
+## Alembic: когда и как применять миграции
 
-```bash
-docker compose up --build
-docker compose run --rm backend alembic upgrade head
-```
+- Применять при каждом изменении схемы и перед продакшн-деплоем: `alembic upgrade head`.
+- Создавать новые версии при изменении моделей: `alembic revision -m "описание"`.
+- В составе Docker-композа миграции можно выполнить через `docker compose -f backend/docker-compose.yml run --rm backend alembic upgrade head`.
 
-- File: `backend/docker-compose.yml` (includes Postgres)
-- API: `http://localhost:8000` (Swagger: `/docs`)
+## Запуск через Docker (обзор)
 
-## Alembic Migrations
+- Файл `backend/docker-compose.yml` поднимает PostgreSQL и бэкенд.
+- Перед стартом задать переменные (`DATABASE_URL` или `DB_*`, `SECRET_KEY`, CORS и т.д.).
+- Запуск: `docker compose -f backend/docker-compose.yml up --build`.
+- Swagger доступен на `http://localhost:8000/docs`.
 
-- Apply: `alembic upgrade head`
-- Create (if needed): `alembic revision -m "message"`
-- Run migrations after schema changes and before serving production traffic.
+## Загрузки и аватары
 
-## Uploads and Avatars
+- Файлы хранятся в `backend/uploads/avatars` на файловой системе контейнера.
+- Раздаются статикой по `GET /media/avatars/<имя-файла>` из FastAPI.
+- На Render файловая система эфемерна: без примонтированного тома аватары теряются при перезапусках. Обязательно используйте постоянное хранилище для этого каталога.
 
-- Stored under `backend/uploads/avatars` on the backend filesystem.
-- No CDN or remote storage; files are **ephemeral** in containerized/cloud deploys unless a persistent volume is mounted. Mount this path in production to avoid avatar loss.
+## Ограничения текущего MVP
 
-## Known Limitations (current state)
-
-- User CRUD endpoints are placeholders beyond auth-protected avatar upload.  
-- CORS is permissive by default; configure `ALLOWED_ORIGINS` for real deployments.  
-- Healthcheck does not verify DB connectivity.  
-- Single refresh token per user (multi-device sessions not supported).  
-- No rate limiting or brute-force protection on auth endpoints.  
-- Uploads are local-only and not backed by persistent storage.
+- CRUD пользователей (кроме загрузки аватара) реализован заглушками.
+- CORS по умолчанию разрешает `*`; для реальных доменов требуется настройка `ALLOWED_ORIGINS`.
+- `/health` не проверяет подключение к БД.
+- Один refresh-токен на пользователя; многосессионность не поддерживается.
+- Нет rate limiting и защиты от brute force на auth-эндпоинтах.
+- Загрузки локальные и без внешнего хранилища; без тома данные теряются при деплое.

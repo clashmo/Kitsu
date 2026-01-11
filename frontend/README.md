@@ -1,25 +1,25 @@
-# Frontend (Next.js)
+# Фронтенд (Next.js)
 
-## Purpose
+## Назначение
 
-User-facing web app for browsing anime and playback via an HLS proxy. It interacts with the FastAPI backend for data (anime lists/search, auth-dependent features in progress).
+Пользовательский веб-интерфейс для каталога аниме и воспроизведения через HLS-прокси. Получает данные из FastAPI-бэкенда; без доступного API интерфейс работает некорректно.
 
-## Tech Stack
+## Технологии
 
 - Next.js 15 (app router), React 18
 - Tailwind CSS, shadcn/ui
 - React Query, Axios, zustand
-- next-runtime-env for runtime env injection
-- ArtPlayer + HLS.js
+- next-runtime-env для прокидывания переменных окружения в рантайме
+- ArtPlayer + HLS.js для плеера
 
-## Environment Variables (required)
+## Обязательные переменные окружения
 
-- `NEXT_PUBLIC_API_URL` – Base URL of the FastAPI backend (e.g., `http://localhost:8000`)
-- `NEXT_PUBLIC_PROXY_URL` – Base URL of the HLS/m3u8 proxy (e.g., `http://localhost:4040`)
+- `NEXT_PUBLIC_API_URL` — публичный URL FastAPI (например, `http://localhost:8000`).
+- `NEXT_PUBLIC_PROXY_URL` — URL HLS/m3u8-прокси для выдачи потоков (например, `http://localhost:4040`).
 
-Set these in `.env.local` (local) or Render env vars (production). The app will fail to fetch data if `NEXT_PUBLIC_API_URL` is unset.
+Укажите их в `.env.local` для локальной работы или в переменных окружения Render. При отсутствии `NEXT_PUBLIC_API_URL` запросы к API не выполняются.
 
-## Running Locally
+## Локальный запуск
 
 ```bash
 npm install
@@ -28,28 +28,28 @@ NEXT_PUBLIC_PROXY_URL=http://localhost:4040 \
 npm run dev
 ```
 
-The frontend requires the FastAPI backend to be running and reachable at `NEXT_PUBLIC_API_URL`.
+Фронтенд требует доступного бэкенда по `NEXT_PUBLIC_API_URL` и прокси по `NEXT_PUBLIC_PROXY_URL`.
 
-## Production (Render)
+## Продакшн/Render
 
-1. Build using the provided `Dockerfile` (standalone Next.js output).  
-2. Configure env vars: `NEXT_PUBLIC_API_URL` (public backend URL) and `NEXT_PUBLIC_PROXY_URL` (public proxy URL).  
-3. Deploy the image; expose port 3000.  
-4. Ensure the backend is deployed and reachable; frontend will not function without it.
+1. Соберите образ с помощью корневого `Dockerfile` (Next.js standalone).
+2. Настройте `NEXT_PUBLIC_API_URL` (публичный адрес бэкенда) и `NEXT_PUBLIC_PROXY_URL` (публичный адрес HLS-прокси) в настройках Render.
+3. Разверните контейнер, откройте порт 3000.
+4. Убедитесь, что бэкенд доступен с фронтенда; иначе страницы каталога и просмотр не работают.
 
-## Backend Dependency
+## Зависимость от бэкенда
 
-- All API data (anime list, search, auth) is expected from the FastAPI backend.
-- Without the backend, pages relying on `/anime` or `/search/anime` will render empty/errored states.
+- Все данные каталога, поиска и авторизации приходят из FastAPI.
+- При недоступности API страницы `/anime` и `/search/anime` отображают пустые/ошибочные состояния.
 
-## Hybrid Data Sources
+## Гибридные источники данных
 
-- Some playback/search paths still use HiAnime scraper endpoints exposed via Next API routes. Media streaming also depends on `NEXT_PUBLIC_PROXY_URL`.
-- Backend is authoritative for core data; scraper routes are supplemental and may differ in IDs/shape.
+- Часть маршрутов воспроизведения и поиска использует скрейперы HiAnime через API-роуты Next.js.
+- FastAPI остаётся источником истины для основного каталога; скрейперы вспомогательные и могут отличаться по структуре данных.
 
-## Known Limitations
+## Ограничения текущего MVP
 
-- Auth UI and API wiring are incomplete; refresh/login flows are not fully exposed in the UI.  
-- Anime data uses placeholders for posters/episodes when backend omits fields.  
-- Proxy/HLS must be reachable; missing `NEXT_PUBLIC_PROXY_URL` breaks playback.  
-- Error handling is minimal; backend downtime results in empty sections without detailed messaging.
+- UI авторизации неполный: не все потоки login/refresh выведены в интерфейс.
+- Для некоторых аниме используются заглушки постеров/эпизодов, если бэкенд не возвращает данные.
+- Работа с ошибками минимальна: при падении бэкенда блоки страниц отображают пустые результаты без подробных сообщений.
+- Отсутствует изоляция от недоступности `NEXT_PUBLIC_PROXY_URL`: без прокси воспроизведение не работает.
