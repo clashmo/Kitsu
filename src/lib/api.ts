@@ -114,7 +114,9 @@ api.interceptors.response.use(
               refreshToken: tokens.refreshToken,
             });
         }
-        // Prefer freshly issued token; fall back to stored token if backend omitted it
+        // Prefer freshly issued token; fall back to stored token only when backend omits tokens
+        // Some refresh endpoints may skip returning tokens if a session was just rotated.
+        // In that case we reuse the last known access token to avoid dropping the user abruptly.
         const newToken = resolveAccessToken(tokens);
         if (!newToken) {
           processQueue(new Error("No token returned from refresh"), null);

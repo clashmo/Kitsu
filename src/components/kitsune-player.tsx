@@ -570,12 +570,6 @@ function KitsunePlayer({
           storeWatchProgressLocally(
             bookmarkIdRef.current,
             null, // Force creation attempt
-            {
-              episodeId: serversData.episodeId,
-              episodeNumber: parseInt(serversData.episodeNo),
-              current: currentTime,
-              duration: duration,
-            },
           ).then((newId) => {
             if (newId) {
               watchedRecordIdRef.current = newId;
@@ -593,12 +587,10 @@ function KitsunePlayer({
       ) {
         // Call sync directly now, timer approach less reliable with state/refs
         // console.log("Updating progress via interval check")
-        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: currentTime,
-          duration: duration,
-        }).then((id) => {
+        storeWatchProgressLocally(
+          bookmarkIdRef.current,
+          watchedRecordIdRef.current,
+        ).then((id) => {
           if (id) watchedRecordIdRef.current = id; // Update ref just in case
         });
         lastUpdateTimeRef.current = Date.now(); // Reset timer
@@ -672,12 +664,10 @@ function KitsunePlayer({
         console.log("Syncing progress on pause/seek.");
         // Clear any pending throttled update
         if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: art.currentTime,
-          duration: art.duration,
-        }).then((id) => {
+        storeWatchProgressLocally(
+          bookmarkIdRef.current,
+          watchedRecordIdRef.current,
+        ).then((id) => {
           if (id) watchedRecordIdRef.current = id;
         });
         lastUpdateTimeRef.current = Date.now();
@@ -719,12 +709,10 @@ function KitsunePlayer({
       ) {
         console.log("Syncing final progress on unmount.");
         // Use current values directly
-        storeWatchProgressLocally(bookmarkIdRef.current, watchedRecordIdRef.current, {
-          episodeId: serversData.episodeId,
-          episodeNumber: parseInt(serversData.episodeNo),
-          current: art.currentTime,
-          duration: art.duration,
-        }); // Don't need to wait for promise here
+        storeWatchProgressLocally(
+          bookmarkIdRef.current,
+          watchedRecordIdRef.current,
+        ); // Don't need to wait for promise here
       }
 
       // Clear throttle timer
