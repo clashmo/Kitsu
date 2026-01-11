@@ -5,8 +5,8 @@ services:
       - postgres
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-kitsu}:${POSTGRES_PASSWORD:-kitsu}@postgres:5432/${POSTGRES_DB:-kitsu}
-      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY environment variable is required for production deployment}
-      - ALLOWED_ORIGINS=http://localhost:3000
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
       - DEBUG=${DEBUG:-false}
     ports:
       - "8000:8000"
