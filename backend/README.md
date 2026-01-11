@@ -65,7 +65,7 @@ uvicorn app.main:app --reload
 ## Деплой backend на Render
 
 - Тип сервиса: Docker Web Service, порт 8000.
-- Переменные окружения: `SECRET_KEY`, `DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DB`, `ALLOWED_ORIGINS` с конкретными доменами, `DEBUG=false` (в продакшене всегда выключен, включайте только для локальной отладки).
+- Переменные окружения: `SECRET_KEY`, `DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DB` (при наличии спецсимволов в пароле кодируйте их в URL), `ALLOWED_ORIGINS` с конкретными доменами, `DEBUG=false` (в продакшене всегда выключен, включайте только для локальной отладки).
 - PostgreSQL: подключите Managed PostgreSQL на Render и подставьте его DSN в `DATABASE_URL` (asyncpg).
 - Файловое хранилище: добавьте Persistent Disk и смонтируйте в `/app/uploads/avatars`, чтобы аватары сохранялись между рестартами/деплоями.
 - Миграции Alembic: перед приёмом трафика выполните `alembic upgrade head` вручную через Render Shell или настройте Render Release Command с этой командой.
