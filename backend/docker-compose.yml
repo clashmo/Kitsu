@@ -19,7 +19,7 @@ services:
       DATABASE_URL: "${DATABASE_URL:-postgresql+asyncpg://${DB_USER:-kitsu}:${DB_PASSWORD:-kitsu}@db:5432/${DB_NAME:-kitsu}}"
       APP_NAME: ${APP_NAME:-Kitsu Backend}
       DEBUG: ${DEBUG:-false}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       - db
     ports:

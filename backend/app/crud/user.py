@@ -5,9 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.user import User
 from ..utils.security import hash_password, verify_password
-from .base import CRUDBase
-
-user_crud = CRUDBase[User](User)
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:

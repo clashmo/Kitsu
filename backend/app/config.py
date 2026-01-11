@@ -11,9 +11,7 @@ load_dotenv()
 class Settings(BaseModel):
     app_name: str = Field(default="Kitsu Backend")
     debug: bool = Field(default=False)
-    database_url: str = Field(
-        default="postgresql+asyncpg://kitsu:kitsu@db:5432/kitsu"
-    )
+    database_url: str = Field(default="")
     allowed_origins: list[str] = Field(default_factory=list)
     secret_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(default=30)
@@ -48,12 +46,20 @@ class Settings(BaseModel):
                     "ALLOWED_ORIGINS must contain valid http/https origins with host"
                 )
 
+        database_url = os.getenv("DATABASE_URL", "").strip()
+        if not database_url:
+            raise ValueError("DATABASE_URL environment variable must be set")
+
+        parsed_db = urlparse(database_url)
+        if parsed_db.scheme != "postgresql+asyncpg":
+            raise ValueError("DATABASE_URL must start with 'postgresql+asyncpg://'")
+        if not parsed_db.hostname:
+            raise ValueError("DATABASE_URL must include hostname")
+
         return cls(
             app_name=os.getenv("APP_NAME", cls.model_fields["app_name"].default),
             debug=os.getenv("DEBUG", "false").lower() == "true",
-            database_url=os.getenv(
-                "DATABASE_URL", cls.model_fields["database_url"].default
-            ),
+            database_url=database_url,
             allowed_origins=allowed_origins,
             secret_key=secret_key,
             access_token_expire_minutes=int(
