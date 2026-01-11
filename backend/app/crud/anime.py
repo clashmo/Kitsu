@@ -1,15 +1,23 @@
+import uuid
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.anime import Anime
-from .base import CRUDBase
-
-anime_crud = CRUDBase[Anime](Anime)
 
 
-async def create_anime(session: AsyncSession, data: dict) -> Anime:
-    return await anime_crud.create(session, data)
+async def get_anime_list(
+    session: AsyncSession, limit: int, offset: int
+) -> list[Anime]:
+    stmt = (
+        select(Anime)
+        .order_by(Anime.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await session.execute(stmt)
+    return list(result.scalars().all())
 
 
-async def list_anime(session: AsyncSession, limit: int = 20, offset: int = 0) -> list[Anime]:
-    return await anime_crud.list(session, limit=limit, offset=offset)
-
+async def get_anime_by_id(session: AsyncSession, anime_id: uuid.UUID) -> Anime | None:
+    return await session.get(Anime, anime_id)
