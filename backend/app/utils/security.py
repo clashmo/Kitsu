@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -41,3 +44,15 @@ def decode_access_token(token: str) -> dict[str, Any]:
         raise TokenExpiredError from exc
     except jwt.InvalidTokenError as exc:
         raise TokenInvalidError from exc
+
+
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe()
+
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def verify_refresh_token(token: str, token_hash: str) -> bool:
+    return hmac.compare_digest(hash_refresh_token(token), token_hash)
