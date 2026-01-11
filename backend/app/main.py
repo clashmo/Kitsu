@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -20,6 +21,19 @@ from .routers import (
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 
 
+def _prepare_avatar_directory() -> None:
+    try:
+        AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        raise RuntimeError("Failed to prepare avatar directory.") from exc
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _prepare_avatar_directory()
+    yield
+
+
 class AvatarStaticFiles(StaticFiles):
     def file_response(self, full_path, stat_result, scope, status_code=200):
         response = super().file_response(full_path, stat_result, scope, status_code)
@@ -27,7 +41,7 @@ class AvatarStaticFiles(StaticFiles):
         return response
 
 
-app = FastAPI(title=settings.app_name, debug=settings.debug)
+app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
