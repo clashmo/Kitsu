@@ -4,7 +4,6 @@ import { useAuthStore } from "@/store/auth-store";
 
 const baseURL =
   env("NEXT_PUBLIC_API_BASE_URL") ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
   env("NEXT_PUBLIC_API_URL") ||
   "";
 
