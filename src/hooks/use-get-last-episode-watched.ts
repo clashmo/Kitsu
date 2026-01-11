@@ -14,10 +14,7 @@ export const useGetLastEpisodeWatched = (animeId: string) => {
       return;
     }
 
-    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime> | null>(
-      "watched",
-      [],
-    );
+    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
 
     if (!Array.isArray(watchedDetails)) {
       removeLocalStorageItem("watched");

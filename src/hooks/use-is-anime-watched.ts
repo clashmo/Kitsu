@@ -16,10 +16,7 @@ export const useHasAnimeWatched = (
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime> | null>(
-      "watched",
-      [],
-    );
+    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
 
     if (!Array.isArray(watchedDetails)) {
       removeLocalStorageItem("watched");

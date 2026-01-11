@@ -25,7 +25,10 @@ export function safeLocalStorageGet<T>(
     const raw = window.localStorage.getItem(key);
     if (raw === null) return fallback;
     if (!parseJson) {
-      return raw as unknown as T;
+      if (typeof fallback === "string" || fallback === null) {
+        return raw as unknown as T;
+      }
+      return fallback;
     }
     try {
       return JSON.parse(raw) as T;
