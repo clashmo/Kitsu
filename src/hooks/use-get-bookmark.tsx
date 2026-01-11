@@ -45,10 +45,10 @@ function useBookMarks({
   populate = true,
 }: Props) {
   const { auth } = useAuthStore();
+  const progressKey = "watch-progress";
   const [bookmarks, setBookmarks] = useState<Bookmark[] | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const progressKey = "watch-progress";
   const [progressQueue, setProgressQueue] = useState<
     Array<{
       bookmarkId: string;

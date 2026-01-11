@@ -18,7 +18,7 @@ export function isLocalStorageAvailable(): boolean {
  * @returns The value or null if not found or SSR
  */
 export function getLocalStorageItem(key: string): string | null {
-  return safeLocalStorageGet(key, null);
+  return safeLocalStorageGet<string | null>(key, null);
 }
 
 /**
