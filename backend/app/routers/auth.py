@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +32,18 @@ from ..utils.security import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+async def _issue_tokens(db: AsyncSession, user_id: uuid.UUID) -> TokenResponse:
+    access_token = create_access_token({"sub": str(user_id)})
+    refresh_token = create_refresh_token(user_id)
+    token_hash = hash_refresh_token(refresh_token)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        days=settings.refresh_token_expire_days
+    )
+    await create_or_rotate_refresh_token(db, user_id, token_hash, expires_at)
+    await db.commit()
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     payload: UserRegister, db: AsyncSession = Depends(get_db)
@@ -45,16 +58,7 @@ async def register(
     user = await create_user_with_password(db, payload.email, payload.password)
     await db.flush()
 
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token(user.id)
-    token_hash = hash_refresh_token(refresh_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.refresh_token_expire_days
-    )
-    await create_or_rotate_refresh_token(db, user.id, token_hash, expires_at)
-    await db.commit()
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return await _issue_tokens(db, user.id)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -66,16 +70,7 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> Token
             detail="Invalid email or password",
         )
 
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token(user.id)
-    token_hash = hash_refresh_token(refresh_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.refresh_token_expire_days
-    )
-    await create_or_rotate_refresh_token(db, user.id, token_hash, expires_at)
-    await db.commit()
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return await _issue_tokens(db, user.id)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -96,18 +91,7 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired"
         )
-    access_token = create_access_token({"sub": str(stored_token.user_id)})
-    refresh_token = create_refresh_token(stored_token.user_id)
-    new_token_hash = hash_refresh_token(refresh_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.refresh_token_expire_days
-    )
-    await create_or_rotate_refresh_token(
-        db, stored_token.user_id, new_token_hash, expires_at
-    )
-    await db.commit()
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return await _issue_tokens(db, stored_token.user_id)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
