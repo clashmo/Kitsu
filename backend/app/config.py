@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -37,8 +38,15 @@ class Settings(BaseModel):
 
         if "*" in allowed_origins:
             raise ValueError(
-                "ALLOWED_ORIGINS cannot contain '*' when allow_credentials is enabled"
+                "ALLOWED_ORIGINS cannot contain '*' when credentialed requests are used"
             )
+
+        for origin in allowed_origins:
+            parsed = urlparse(origin)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise ValueError(
+                    "ALLOWED_ORIGINS must contain valid http/https origins with host"
+                )
 
         return cls(
             app_name=os.getenv("APP_NAME", cls.model_fields["app_name"].default),
