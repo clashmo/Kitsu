@@ -2,7 +2,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
+from ..crud.anime import get_anime_by_id
 from ..crud.favorite import add_favorite, list_favorites, remove_favorite
 from ..dependencies import get_current_user, get_db
 from ..models.user import User
@@ -27,9 +29,20 @@ async def create_favorite(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> FavoriteRead:
+    anime = await get_anime_by_id(db, payload.anime_id)
+    if anime is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Anime not found"
+        )
+
     try:
         favorite = await add_favorite(db, user_id=current_user.id, anime_id=payload.anime_id)
     except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Favorite already exists"
+        ) from None
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Favorite already exists"
         ) from None

@@ -34,7 +34,7 @@ async def remove_favorite(
     if favorite is None:
         raise LookupError("Favorite not found")
 
-    await session.delete(favorite)
+    session.delete(favorite)
     await session.flush()
 
 
