@@ -14,6 +14,7 @@ import { AlertCircleIcon } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSearchParams } from "next/navigation";
+import { getLocalStorageJSON, setLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
 
 const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
@@ -42,9 +43,13 @@ const VideoPlayerSection = () => {
     key,
   );
 
-  const [watchedDetails, setWatchedDetails] = useState<Array<IWatchedAnime>>(
-    JSON.parse(localStorage.getItem("watched") as string) || [],
-  );
+  const [watchedDetails, setWatchedDetails] = useState<Array<IWatchedAnime>>([]);
+
+  // Hydrate watchedDetails from localStorage on client side only
+  useEffect(() => {
+    const watched = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
+    setWatchedDetails(watched);
+  }, []);
 
   // function changeServer(serverName: string, key: string) {
   //   setServerName(serverName);
@@ -56,7 +61,7 @@ const VideoPlayerSection = () => {
   useEffect(() => {
     if (auth) return;
     if (!Array.isArray(watchedDetails)) {
-      localStorage.removeItem("watched");
+      removeLocalStorageItem("watched");
       return;
     }
 
@@ -78,7 +83,7 @@ const VideoPlayerSection = () => {
             episodes: [selectedEpisode],
           },
         ];
-        localStorage.setItem("watched", JSON.stringify(updatedWatchedDetails));
+        setLocalStorageJSON("watched", updatedWatchedDetails);
         setWatchedDetails(updatedWatchedDetails);
       } else {
         // Update the existing anime entry
@@ -96,10 +101,7 @@ const VideoPlayerSection = () => {
               : watchedAnime,
           );
 
-          localStorage.setItem(
-            "watched",
-            JSON.stringify(updatedWatchedDetails),
-          );
+          setLocalStorageJSON("watched", updatedWatchedDetails);
           setWatchedDetails(updatedWatchedDetails);
         }
       }

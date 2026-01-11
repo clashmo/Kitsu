@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { IWatchedAnime } from "@/types/watched-anime";
 import { WatchHistory } from "./use-get-bookmark";
+import { getLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
 
 export const useHasAnimeWatched = (
   animeId: string,
@@ -11,11 +12,10 @@ export const useHasAnimeWatched = (
   const [hasWatchedEpisode, setHasWatchedEpisode] = useState(false);
 
   useEffect(() => {
-    const watchedDetails: Array<IWatchedAnime> =
-      JSON.parse(localStorage.getItem("watched") as string) || [];
+    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
 
     if (!Array.isArray(watchedDetails)) {
-      localStorage.removeItem("watched");
+      removeLocalStorageItem("watched");
       return;
     }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { IWatchedAnime } from "@/types/watched-anime";
+import { getLocalStorageJSON } from "@/utils/storage";
 
 export const useGetLastEpisodeWatched = (animeId: string) => {
   const [lastEpisodeWatched, setLastEpisodeWatched] = useState<string | null>(
@@ -7,8 +8,7 @@ export const useGetLastEpisodeWatched = (animeId: string) => {
   );
 
   useEffect(() => {
-    const watchedDetails: Array<IWatchedAnime> =
-      JSON.parse(localStorage.getItem("watched") as string) || [];
+    const watchedDetails = getLocalStorageJSON<Array<IWatchedAnime>>("watched", []);
 
     const anime = watchedDetails.find(
       (watchedAnime) => watchedAnime.anime.id === animeId,
