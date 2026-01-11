@@ -33,14 +33,14 @@ routers = [
     collections.router,
     favorites.router,
     views.router,
-    search.router,
 ]
 
 for router in routers:
     app.include_router(router)
 
+app.include_router(search.router, tags=["Search"])
+
 
 @app.get("/health", tags=["health"])
 async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
-
