@@ -3,10 +3,18 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db
+from ..dependencies import get_current_user, get_db
+from ..models.user import User
 from ..schemas.user import UserCreate, UserRead
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/me", response_model=UserRead)
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user),
+) -> UserRead:
+    return current_user
 
 
 @router.get("/", response_model=list[UserRead])
@@ -30,4 +38,3 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)) -> UserRead
         is_active=True,
         created_at=datetime.now(),
     )
-
