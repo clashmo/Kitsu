@@ -14,6 +14,10 @@ class Settings(BaseModel):
         default="postgresql+asyncpg://kitsu:kitsu@db:5432/kitsu"
     )
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
+    secret_key: str = Field(default="change-me")
+    jwt_algorithm: str = Field(default="HS256")
+    access_token_expire_minutes: int = Field(default=15)
+    refresh_token_expire_minutes: int = Field(default=60 * 24 * 7)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -28,6 +32,24 @@ class Settings(BaseModel):
                 for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
                 if origin.strip()
             ],
+            secret_key=os.getenv(
+                "SECRET_KEY", cls.model_fields["secret_key"].default
+            ),
+            jwt_algorithm=os.getenv(
+                "JWT_ALGORITHM", cls.model_fields["jwt_algorithm"].default
+            ),
+            access_token_expire_minutes=int(
+                os.getenv(
+                    "ACCESS_TOKEN_EXPIRE_MINUTES",
+                    cls.model_fields["access_token_expire_minutes"].default,
+                )
+            ),
+            refresh_token_expire_minutes=int(
+                os.getenv(
+                    "REFRESH_TOKEN_EXPIRE_MINUTES",
+                    cls.model_fields["refresh_token_expire_minutes"].default,
+                )
+            ),
         )
 
 
