@@ -26,7 +26,6 @@ from ..utils.security import (
     create_access_token,
     create_refresh_token,
     hash_refresh_token,
-    verify_refresh_token,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -97,13 +96,6 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired"
         )
-    if not verify_refresh_token(payload.refresh_token, stored_token.token_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
-
-    await revoke_refresh_token(db, stored_token.user_id)
-
     access_token = create_access_token({"sub": str(stored_token.user_id)})
     refresh_token = create_refresh_token(stored_token.user_id)
     new_token_hash = hash_refresh_token(refresh_token)

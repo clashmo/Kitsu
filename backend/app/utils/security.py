@@ -47,7 +47,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
         raise TokenInvalidError from exc
 
 
-def create_refresh_token(user_id: UUID) -> str:
+def create_refresh_token(_user_id: UUID) -> str:
     return secrets.token_urlsafe()
 
 
