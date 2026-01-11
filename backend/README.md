@@ -62,6 +62,14 @@ uvicorn app.main:app --reload
 - Раздаются статикой по `GET /media/avatars/<имя-файла>` из FastAPI.
 - На Render файловая система эфемерна: без примонтированного тома аватары теряются при перезапусках. Обязательно используйте постоянное хранилище для этого каталога.
 
+## Деплой backend на Render
+
+- Тип сервиса: Docker Web Service, порт 8000.
+- Переменные окружения: `SECRET_KEY`, `DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DB`, `ALLOWED_ORIGINS` с конкретными доменами, при необходимости `DEBUG=false`.
+- PostgreSQL: подключите Managed PostgreSQL на Render и подставьте его DSN в `DATABASE_URL` (asyncpg).
+- Файловое хранилище: добавьте Persistent Disk и смонтируйте в `/app/uploads/avatars`, чтобы аватары сохранялись между рестартами/деплоями.
+- Миграции Alembic: перед приёмом трафика выполните `alembic upgrade head` вручную через Render Shell или настройте Render Release Command с этой командой.
+
 ## Ограничения текущего MVP
 
 - CRUD пользователей (кроме загрузки аватара) реализован заглушками.
