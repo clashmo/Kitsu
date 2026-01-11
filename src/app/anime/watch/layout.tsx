@@ -9,59 +9,27 @@ import AnimeCard from "@/components/anime-card";
 import { useAnimeStore } from "@/store/anime-store";
 
 import EpisodePlaylist from "@/components/episode-playlist";
-import Select, { ISelectOptions } from "@/components/common/select";
-import {
-  Ban,
-  BookmarkCheck,
-  CheckCheck,
-  Hand,
-  TvMinimalPlay,
-} from "lucide-react";
+import { Heart } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGetAnimeDetails } from "@/query/get-anime-details";
 import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import AnimeCarousel from "@/components/anime-carousel";
 import { IAnime } from "@/types/anime";
-import useBookMarks from "@/hooks/use-get-bookmark";
 import { toast } from "sonner";
 import { useGetAllEpisodes } from "@/query/get-all-episodes";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth-store";
 
 type Props = {
   children: ReactNode;
 };
 
-const SelectOptions: ISelectOptions[] = [
-  {
-    value: "plan to watch",
-    label: "Plan to Watch",
-    icon: BookmarkCheck,
-  },
-  {
-    value: "watching",
-    label: "Watching",
-    icon: TvMinimalPlay,
-  },
-  {
-    value: "completed",
-    label: "Completed",
-    icon: CheckCheck,
-  },
-  {
-    value: "on hold",
-    label: "On Hold",
-    icon: Hand,
-  },
-  {
-    value: "dropped",
-    label: "Dropped",
-    icon: Ban,
-  },
-];
-
 const Layout = (props: Props) => {
   const searchParams = useSearchParams();
   const { setAnime, setSelectedEpisode } = useAnimeStore();
   const router = useRouter();
+  const { auth } = useAuthStore();
 
   const currentAnimeId = useMemo(
     () => searchParams.get("anime"),
@@ -94,30 +62,69 @@ const Layout = (props: Props) => {
       router.push(ROUTES.HOME);
     }
     //eslint-disable-next-line
-  }, [animeId]);
+  }, [animeId, auth]);
 
-  const { bookmarks, createOrUpdateBookMark } = useBookMarks({
-    animeID: currentAnimeId as string,
-    page: 1,
-    per_page: 1,
-  });
-  const [selected, setSelected] = useState("");
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  const handleSelect = async (value: string) => {
-    const previousSelected = selected;
-    setSelected(value);
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!animeId || !api) return;
+      if (!auth) {
+        setIsFavorite(false);
+        return;
+      }
+      try {
+        const res = await api.get("/favorites");
+        const match = (res.data as any[])?.find(
+          (fav) => fav.anime_id === animeId,
+        );
+        setIsFavorite(!!match);
+        setFavoriteId(match?.id ?? null);
+      } catch {
+        setIsFavorite(false);
+        setFavoriteId(null);
+      }
+    };
+    loadFavorites();
+  }, [animeId, auth]);
 
+  const toggleFavorite = async () => {
+    if (!animeId) return;
+    if (!auth) {
+      toast.error("Please login to manage favorites", {
+        style: { background: "red" },
+      });
+      return;
+    }
+    setFavoriteLoading(true);
     try {
-      await createOrUpdateBookMark(
-        currentAnimeId as string,
-        anime?.anime.info.name!,
-        anime?.anime.info.poster!,
-        value,
-      );
-    } catch (error) {
-      console.log(error);
-      setSelected(previousSelected);
-      toast.error("Error adding to list", { style: { background: "red" } });
+      if (isFavorite) {
+        if (!favoriteId) {
+          toast.error("Favorite not found to remove", {
+            style: { background: "red" },
+          });
+          return;
+        }
+        await api.delete(`/favorites/${favoriteId}`);
+        setIsFavorite(false);
+        setFavoriteId(null);
+        toast.success("Removed from favorites", {
+          style: { background: "green" },
+        });
+      } else {
+        const res = await api.post("/favorites", { anime_id: animeId });
+        setIsFavorite(true);
+        setFavoriteId((res.data as any)?.id ?? null);
+        toast.success("Added to favorites", { style: { background: "green" } });
+      }
+    } catch {
+      toast.error("Unable to update favorites", {
+        style: { background: "red" },
+      });
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 
@@ -145,7 +152,6 @@ const Layout = (props: Props) => {
               subOrDub={anime?.anime.info.stats.episodes}
               episodes={episodes}
               isLoading={episodeLoading}
-              bookmarks={bookmarks}
             />
           )}
         </div>
@@ -159,12 +165,18 @@ const Layout = (props: Props) => {
             href={ROUTES.ANIME_DETAILS + "/" + anime?.anime.info.id}
           />
           <div className="flex flex-col gap-2">
-            <Select
-              placeholder="Add to list"
-              value={bookmarks?.[0]?.status || selected}
-              options={SelectOptions}
-              onChange={handleSelect}
-            />
+            <Button
+              variant={isFavorite ? "secondary" : "default"}
+              className="flex items-center gap-2"
+              onClick={toggleFavorite}
+              disabled={favoriteLoading}
+            >
+              <Heart
+                className="h-4 w-4"
+                fill={isFavorite ? "currentColor" : "none"}
+              />
+              {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            </Button>
             <h1 className="text-2xl md:font-black font-extrabold z-[100]">
               {anime?.anime.info.name}
             </h1>

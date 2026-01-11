@@ -5,6 +5,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { env } from "next-runtime-env";
+import { PLACEHOLDER_POSTER } from "@/utils/constants";
 
 type Props = {
   url?: string;
@@ -23,7 +24,11 @@ function Avatar({
   collectionID,
   onClick,
 }: Props) {
-  const src = `${env("NEXT_PUBLIC_POCKETBASE_URL")}/api/files/${collectionID}/${id}/${url}`;
+  const base = env("NEXT_PUBLIC_POCKETBASE_URL");
+  const src =
+    url && base && collectionID && id
+      ? `${base}/api/files/${collectionID}/${id}/${url}`
+      : PLACEHOLDER_POSTER;
 
   return (
     <AvatarCN className={className} onClick={onClick}>

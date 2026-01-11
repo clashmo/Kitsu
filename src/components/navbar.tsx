@@ -17,9 +17,9 @@ import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
 import { useAuthStore } from "@/store/auth-store";
-import { pb } from "@/lib/pocketbase";
 import NavbarAvatar from "./navbar-avatar";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 const menuItems: Array<{ title: string; href?: string }> = [
   // {
@@ -45,35 +45,45 @@ const NavBar = () => {
 
   useEffect(() => {
     const refreshAuth = async () => {
-      const auth_token = JSON.parse(
-        localStorage.getItem("pocketbase_auth") as string,
-      );
-      if (auth_token) {
-        try {
-          const user = await pb.collection("users").authRefresh();
-          if (user) {
-            auth.setAuth({
-              id: user.record.id,
-              email: user.record.email,
-              username: user.record.username,
-              avatar: user.record.avatar,
-              collectionId: user.record.collectionId,
-              collectionName: user.record.collectionName,
-              autoSkip: user.record.autoSkip,
-            });
-          }
-        } catch (e) {
-          console.error("Auth refresh error:", e);
-          localStorage.removeItem("pocketbase_auth");
-          auth.clearAuth();
-          toast.error("Login session expired.", {
-            style: { background: "red" },
-          });
-        }
+      if (!auth.auth?.refreshToken) return;
+      auth.setIsRefreshing(true);
+      try {
+        const { data } = await api.post("/auth/refresh", {
+          refresh_token: auth.auth.refreshToken,
+        });
+
+        const profile = await api.get("/users/me");
+
+        auth.setAuth({
+          id: (profile.data as any)?.id,
+          email: (profile.data as any)?.email,
+          username: (profile.data as any)?.email?.split("@")[0],
+          avatar: "",
+          collectionId: "",
+          collectionName: "",
+          autoSkip: false,
+          accessToken:
+            (data as any).access_token ||
+            (data as any).accessToken ||
+            (data as any).token ||
+            "",
+          refreshToken:
+            (data as any).refresh_token ||
+            (data as any).refreshToken ||
+            "",
+        });
+      } catch (e) {
+        console.error("Auth refresh error:", e);
+        auth.clearAuth();
+        toast.error("Login session expired.", {
+          style: { background: "red" },
+        });
+      } finally {
+        auth.setIsRefreshing(false);
       }
     };
     refreshAuth();
-  }, []);
+  }, [auth.auth?.refreshToken]);
 
   return (
     <div

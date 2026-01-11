@@ -14,84 +14,79 @@ import AnimeEpisodes from "@/components/anime-episodes";
 import CharacterCard from "@/components/common/character-card";
 import { ROUTES } from "@/constants/routes";
 import WatchTrailer from "@/components/watch-trailer";
-import Select, { ISelectOptions } from "@/components/common/select";
-import {
-  Ban,
-  BookmarkCheck,
-  CheckCheck,
-  Hand,
-  Heart,
-  TvMinimalPlay,
-} from "lucide-react";
+import { Heart } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useGetAnimeDetails } from "@/query/get-anime-details";
 import Loading from "@/app/loading";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
-import useBookMarks from "@/hooks/use-get-bookmark";
 import { useGetAnimeBanner } from "@/query/get-banner-anime";
-
-const SelectOptions: ISelectOptions[] = [
-  {
-    value: "plan to watch",
-    label: "Plan to Watch",
-    icon: BookmarkCheck,
-  },
-  {
-    value: "watching",
-    label: "Watching",
-    icon: TvMinimalPlay,
-  },
-  {
-    value: "completed",
-    label: "Completed",
-    icon: CheckCheck,
-  },
-  {
-    value: "on hold",
-    label: "On Hold",
-    icon: Hand,
-  },
-  {
-    value: "dropped",
-    label: "Dropped",
-    icon: Ban,
-  },
-];
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 const Page = () => {
   const { slug } = useParams();
   const { data: anime, isLoading } = useGetAnimeDetails(slug as string);
   const { auth } = useAuthStore();
-  const { bookmarks, createOrUpdateBookMark } = useBookMarks({
-    animeID: slug as string,
-    page: 1,
-    per_page: 1,
-  });
-  const [selected, setSelected] = useState(bookmarks?.[0]?.status || "");
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const { data: banner, isLoading: bannerLoading } = useGetAnimeBanner(
     anime?.anime.info.anilistId!,
   );
 
-  const handleSelect = async (value: string) => {
+  React.useEffect(() => {
+    const loadFavorites = async () => {
+      if (!auth || !slug) return;
+      try {
+        const res = await api.get("/favorites");
+        const match = (res.data as any[])?.find(
+          (fav) => fav.anime_id === slug,
+        );
+        if (match) {
+          setIsFavorite(true);
+          setFavoriteId(match.id);
+        } else {
+          setIsFavorite(false);
+          setFavoriteId(null);
+        }
+      } catch {
+        setIsFavorite(false);
+        setFavoriteId(null);
+      }
+    };
+    loadFavorites();
+  }, [auth, slug]);
+
+  const toggleFavorite = async () => {
     if (!auth) {
+      toast.error("Please login to manage favorites", {
+        style: { background: "red" },
+      });
       return;
     }
-    const previousSelected = selected;
-    setSelected(value);
-
+    setFavoriteLoading(true);
     try {
-      await createOrUpdateBookMark(
-        slug as string,
-        anime?.anime.info.name!,
-        anime?.anime.info.poster!,
-        value,
-      );
-    } catch (error) {
-      console.log(error);
-      setSelected(previousSelected);
-      toast.error("Error adding to list", { style: { background: "red" } });
+      if (isFavorite && favoriteId) {
+        await api.delete(`/favorites/${favoriteId}`);
+        setIsFavorite(false);
+        setFavoriteId(null);
+        toast.success("Removed from favorites", {
+          style: { background: "green" },
+        });
+      } else {
+        const res = await api.post("/favorites", { anime_id: slug });
+        setIsFavorite(true);
+        setFavoriteId((res.data as any)?.id || slug);
+        toast.success("Added to favorites", { style: { background: "green" } });
+      }
+    } catch {
+      toast.error("Unable to update favorites", {
+        style: { background: "red" },
+      });
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 
@@ -136,15 +131,18 @@ const Page = () => {
             </h1>
             <div className="flex items-center gap-5">
               <WatchButton />
-              {auth && (
-                <Select
-                  placeholder="Add to list"
-                  value={bookmarks?.[0]?.status || selected}
-                  options={SelectOptions}
-                  onChange={handleSelect}
-                  placeholderIcon={Heart}
+              <Button
+                variant={isFavorite ? "secondary" : "default"}
+                className="flex items-center gap-2"
+                onClick={toggleFavorite}
+                disabled={favoriteLoading}
+              >
+                <Heart
+                  className="h-4 w-4"
+                  fill={isFavorite ? "currentColor" : "none"}
                 />
-              )}
+                {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+              </Button>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
-import { pb } from "@/lib/pocketbase";
 import { useAuthStore } from "@/store/auth-store";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { PLACEHOLDER_POSTER } from "@/utils/constants";
 
 type Props = {
   animeID?: string;
@@ -59,29 +60,62 @@ function useBookMarks({
 
   useEffect(() => {
     if (!populate) return;
+    if (!auth) {
+      setBookmarks(null);
+      setIsLoading(false);
+      return;
+    }
     const getBookmarks = async () => {
       try {
         setIsLoading(true);
-        const res = await pb
-          .collection<Bookmark>("bookmarks")
-          .getList(page, per_page, {
-            filter: filters,
-            expand: "watchHistory",
-            sort: "-updated",
-          });
+        const res = await api.get("/favorites", {
+          params: { limit: per_page || 20, offset: ((page || 1) - 1) * (per_page || 20) },
+        });
+        const favorites = (res.data || []) as Array<{
+          id: string;
+          anime_id: string;
+          created_at?: string;
+        }>;
 
-        if (res.totalItems > 0) {
-          const bookmark = res.items;
-          setTotalPages(res.totalPages);
-          setBookmarks(bookmark);
+        type BackendAnime = {
+          id: string;
+          title: string;
+          poster?: string | null;
+        };
+
+        const detailed = await Promise.all(
+          favorites.map(async (fav) => {
+            try {
+              const animeRes = await api.get<BackendAnime>(`/anime/${fav.anime_id}`);
+              return { fav, anime: animeRes.data };
+            } catch {
+              return { fav, anime: null };
+            }
+          }),
+        );
+
+        if (favorites.length > 0) {
+          const mapped = detailed.map(({ fav, anime }) => ({
+            id: fav.id,
+            user: auth.id || "",
+            animeId: fav.anime_id,
+            thumbnail: anime?.poster || PLACEHOLDER_POSTER,
+            animeTitle: anime?.title || "Favorite",
+            status: "favorite",
+            created: fav.created_at || "",
+            expand: { watchHistory: [] as WatchHistory[] },
+          }));
+          setTotalPages(1);
+          setBookmarks(mapped);
         } else {
           setBookmarks(null);
+          setTotalPages(0);
         }
-        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false);
         console.log(error);
+        setBookmarks(null);
       }
+      setIsLoading(false);
     };
 
     getBookmarks();
@@ -89,59 +123,31 @@ function useBookMarks({
 
   const createOrUpdateBookMark = async (
     animeID: string,
-    animeTitle: string,
-    animeThumbnail: string,
-    status: string,
+    _animeTitle?: string,
+    _animeThumbnail?: string,
+    _status?: string,
     showToast: boolean = true,
   ): Promise<string | null> => {
     if (!auth) {
       return null;
     }
     try {
-      const res = await pb.collection<Bookmark>("bookmarks").getList(1, 1, {
-        filter: `animeId='${animeID}'`,
-      });
-
-      if (res.totalItems > 0) {
-        if (res.items[0].status === status) {
-          if (showToast) {
-            toast.error("Already in this status", {
-              style: { background: "red" },
-            });
-          }
-          return res.items[0].id;
-        }
-
-        const updated = await pb
-          .collection("bookmarks")
-          .update(res.items[0].id, {
-            status: status,
-          });
-
+      const existing = bookmarks?.find((b) => b.animeId === animeID);
+      if (existing) {
         if (showToast) {
-          toast.success("Successfully updated status", {
+          toast.success("Already in favorites", {
             style: { background: "green" },
           });
         }
-
-        return updated.id;
-      } else {
-        const created = await pb.collection<Bookmark>("bookmarks").create({
-          user: auth.id,
-          animeId: animeID,
-          animeTitle: animeTitle,
-          thumbnail: animeThumbnail,
-          status: status,
-        });
-
-        if (showToast) {
-          toast.success("Successfully added to list", {
-            style: { background: "green" },
-          });
-        }
-
-        return created.id;
+        return existing.id;
       }
+      const created = await api.post("/favorites", {
+        anime_id: animeID,
+      });
+      if (showToast) {
+        toast.success("Added to favorites", { style: { background: "green" } });
+      }
+      return (created.data as any)?.id || animeID;
     } catch (error) {
       console.log(error);
       return null;
@@ -151,48 +157,28 @@ function useBookMarks({
   const syncWatchProgress = async (
     bookmarkId: string | null,
     watchedRecordId: string | null,
-    episodeData: {
-      episodeId: string;
-      episodeNumber: number;
-      current: number;
-      duration: number;
-    },
+    _episodeData?: unknown,
   ): Promise<string | null> => {
-    if (!pb.authStore.isValid || !bookmarkId) return watchedRecordId;
+    void _episodeData;
+    if (typeof window === "undefined" || !bookmarkId) return watchedRecordId;
 
-    const dataToSave = {
-      episodeId: episodeData.episodeId,
-      episodeNumber: episodeData.episodeNumber,
-      current: Math.round(episodeData.current), // Store as integer seconds
-      timestamp: Math.round(episodeData.duration), // Use 'timestamp' field for duration
-    };
+    const progressKey = "watch-progress";
+    const existing: Array<{
+      bookmarkId: string;
+      watchedRecordId: string | null;
+      updatedAt: number;
+    }> = JSON.parse(localStorage.getItem(progressKey) || "[]");
 
-    try {
-      if (watchedRecordId) {
-        await pb.collection("watched").update(watchedRecordId, dataToSave);
-        return watchedRecordId;
-      } else {
-        const newWatchedRecord = await pb
-          .collection("watched")
-          .create(dataToSave);
+    const updatedRecordId = watchedRecordId || `${bookmarkId}-local`;
+    const filtered = existing.filter((entry) => entry.bookmarkId !== bookmarkId);
+    filtered.push({
+      bookmarkId,
+      watchedRecordId: updatedRecordId,
+      updatedAt: Date.now(),
+    });
+    localStorage.setItem(progressKey, JSON.stringify(filtered));
 
-        try {
-          await pb.collection("bookmarks").update(bookmarkId, {
-            "watchHistory+": newWatchedRecord.id,
-          });
-        } catch (error) {
-          console.error(
-            "Error updating bookmark with new watch record:",
-            error,
-          );
-          return null;
-        }
-        return newWatchedRecord.id;
-      }
-    } catch (error) {
-      console.error("Error syncing watch progress:", error);
-      return watchedRecordId;
-    }
+    return updatedRecordId;
   };
 
   return {
