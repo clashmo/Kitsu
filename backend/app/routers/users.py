@@ -27,18 +27,31 @@ async def update_current_user_profile(
     if avatar is None:
         return current_user
 
-    if not avatar.content_type or not avatar.content_type.startswith("image/"):
+    if avatar.content_type and not avatar.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type. Only image uploads are allowed.",
         )
 
-    if current_user.avatar:
-        delete_avatar_file(current_user.avatar)
+    previous_avatar = current_user.avatar
+    try:
+        new_avatar_path = await save_avatar_file(avatar)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
-    current_user.avatar = await save_avatar_file(avatar)
-    await db.commit()
+    current_user.avatar = new_avatar_path
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        delete_avatar_file(new_avatar_path)
+        raise
     await db.refresh(current_user)
+
+    if previous_avatar:
+        delete_avatar_file(previous_avatar)
     return current_user
 
 
