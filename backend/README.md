@@ -26,6 +26,7 @@
 - `REFRESH_TOKEN_EXPIRE_DAYS` — срок жизни refresh-токена в днях (по умолчанию 14).
 - `ALGORITHM` — алгоритм подписи JWT, по умолчанию `HS256`.
 - `ALLOWED_ORIGINS` — список для CORS, через запятую. Для продакшна указывайте конкретные домены.
+  - При `allow_credentials=true` браузер блокирует `Access-Control-Allow-Origin: *`: со значением `*` куки/авторизационные заголовки не отправляются и ответ считается небезопасным, поэтому указывайте точные origin.
 - `DEBUG` — `true`/`false`, включает отладочный вывод и SQL echo.
 
 ## Локальный запуск (без Docker)
@@ -44,6 +45,7 @@ uvicorn app.main:app --reload
 ## Alembic: когда и как применять миграции
 
 - Применять при каждом изменении схемы и перед продакшн-деплоем: `alembic upgrade head`.
+  - На Render выполняйте команду перед приёмом трафика: либо вручную через Render Shell (одиночный запуск), либо оформив Render Release Command с `alembic upgrade head`, чтобы миграции шли до старта веб-процесса.
 - Создавать новые версии при изменении моделей: `alembic revision -m "описание"`.
 - В составе Docker-композа миграции можно выполнить через `docker compose -f backend/docker-compose.yml run --rm backend alembic upgrade head`.
 
@@ -59,6 +61,14 @@ uvicorn app.main:app --reload
 - Файлы хранятся в `backend/uploads/avatars` на файловой системе контейнера.
 - Раздаются статикой по `GET /media/avatars/<имя-файла>` из FastAPI.
 - На Render файловая система эфемерна: без примонтированного тома аватары теряются при перезапусках. Обязательно используйте постоянное хранилище для этого каталога.
+
+## Деплой backend на Render
+
+- Тип сервиса: Docker Web Service, порт 8000.
+- Переменные окружения: `SECRET_KEY`, `DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DB` (при наличии спецсимволов в пароле кодируйте их в URL), `ALLOWED_ORIGINS` с конкретными доменами, `DEBUG=false` (в продакшене всегда выключен, включайте только для локальной отладки).
+- PostgreSQL: подключите Managed PostgreSQL на Render и подставьте его DSN в `DATABASE_URL` (asyncpg).
+- Файловое хранилище: добавьте Persistent Disk и смонтируйте в `/app/uploads/avatars`, чтобы аватары сохранялись между рестартами/деплоями.
+- Миграции Alembic: перед приёмом трафика выполните `alembic upgrade head` вручную через Render Shell или настройте Render Release Command с этой командой.
 
 ## Ограничения текущего MVP
 

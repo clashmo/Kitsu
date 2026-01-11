@@ -1,17 +1,29 @@
 services:
-  kitsune:
-    image: dovakiin0/kitsune:latest
-    ports:
-      - "3000:3000"
+  backend:
+    build: ./backend
+    depends_on:
+      - postgres
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_POCKETBASE_URL=http://localhost:8090
-      - NEXT_PUBLIC_PROXY_URL=http://localhost:4040
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-kitsu}:${POSTGRES_PASSWORD:-please-set-postgres-password}@postgres:5432/${POSTGRES_DB:-kitsu}
+      - SECRET_KEY=${SECRET_KEY:-please-set-secret-key}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+      - DEBUG=${DEBUG:-false}
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_uploads:/app/uploads/avatars
 
-  proxy:
-    image: dovakiin0/proxy-m3u8:latest
-    ports:
-      - "4040:4040"
+  postgres:
+    image: postgres:16-alpine
     environment:
-      - PORT=4040
-      - CORS_DOMAIN=localhost:3000
+      - POSTGRES_USER=${POSTGRES_USER:-kitsu}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-please-set-postgres-password}
+      - POSTGRES_DB=${POSTGRES_DB:-kitsu}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  backend_uploads:
+  postgres_data:
