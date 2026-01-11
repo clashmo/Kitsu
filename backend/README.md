@@ -1,6 +1,6 @@
 # Kitsu Backend
 
-FastAPI-based backend rewrite for the Kitsu anime website. This project uses PostgreSQL, SQLAlchemy 2.0 (async), and Alembic for migrations.
+FastAPI-based backend rewrite for the Kitsu anime website, intended to replace the existing backend while the current frontend remains unchanged. This project uses PostgreSQL, SQLAlchemy 2.0 (async), and Alembic for migrations.
 
 ## Prerequisites
 
@@ -46,4 +46,3 @@ uvicorn app.main:app --reload
 - `alembic/`: Migration environment and templates.
 - `docker-compose.yml`: Orchestrates backend and PostgreSQL services.
 - `Dockerfile`: Container image definition for the backend.
-
