@@ -1,63 +1,66 @@
 ![logo.png](logo.png)
 
-Watch your favourite anime anywhere, anytime. No Ads.
+# Kitsu
 
-Kitsune is a free, open-source anime streaming website. It is built using the [Next Js](https://nextjs.org/) framework, [Shadcn/ui](https://ui.shadcn.com), and [Tailwind CSS](https://tailwindcss.com/).
+An open-source anime streaming web app in pre-production/MVP stabilization. The stack is split between a FastAPI backend (authoritative API) and a Next.js frontend. The legacy PocketBase backend is **deprecated and not used**.
 
-_Kitsune is still under development and may encounter many bugs. Feel free to open any issue regarding bugs or features_
-
-## Features
-
-- **No Ads** - No ads, no popups, no redirects, no bullshit.
-- **PWA Support** - Kitsune is a PWA, which means you can install it on your phone.
-
-## Contributing
+## Architecture (text)
 
 ```
-fork the repo
+[Next.js Frontend] --(REST/JSON over HTTP(S))--> [FastAPI Backend] --(SQLAlchemy)--> [PostgreSQL]
+        |
+        +--(HiAnime scraper via Next API routes for media sources)
 
-git clone <forked-repo>
-git checkout -b <new-feature>
-git add <changed-file>
-git commit -m "New feature"
-git push origin <new-feature>
-
-then submit a pull request
+[Static uploads] served from FastAPI /media/avatars (local filesystem; no CDN)
 ```
 
-## Local Development
+## Tech Stack
 
-### Prerequisite
+- Frontend: Next.js 15, React 18, Tailwind, shadcn/ui, React Query, Axios
+- Backend: FastAPI, SQLAlchemy 2 (async), Alembic, PostgreSQL
+- Misc: next-runtime-env, ArtPlayer/HLS, HiAnime scraper helper
 
-- Node js
-- Golang (if you wish to use my proxy server)
-- [Pocketbase](https://pocketbase.io)
+## Repository Structure
 
-### Proxy Server
+- `src/` – Next.js app (frontend)
+- `backend/` – FastAPI service (backend)
+- `docker-compose.yml` – legacy compose (frontend + proxy only; PocketBase deprecated)
+- `backend/docker-compose.yml` – backend + Postgres compose
+- `Dockerfile` – frontend image
+- `backend/Dockerfile` – backend image
+- `docs/` – legacy artifacts
 
-Head over to [Proxy-M3U8](https://github.com/Dovakiin0/proxy-m3u8) and follow the instruction to setup. or if you wish to use your own proxy server, feel free.
+## Running the project (high-level)
 
-### Pocketbase
+### Local (recommended)
 
-Follow the instruction from the official website. Setup initial superadmin credentials. Once inside dashboard, go to settings > Import Collections and paste the content from [collection-JSON](https://github.com/Dovakiin0/Kitsune/blob/master/docs/pb.json) and click import.
+1) Backend  
+   - Copy `backend/.env.example` to `backend/.env` and set required variables (see `backend/README.md`).  
+   - Start Postgres (e.g., `docker compose -f backend/docker-compose.yml up db`).  
+   - Run migrations: `docker compose -f backend/docker-compose.yml run --rm backend alembic upgrade head`.  
+   - Start API: `uvicorn app.main:app --reload` (or `docker compose up backend`).
 
-You will need discord client secret if you wish to use login from discord feature.
+2) Frontend  
+   - Set `NEXT_PUBLIC_API_URL` to the FastAPI URL and `NEXT_PUBLIC_PROXY_URL` for the m3u8 proxy.  
+   - `npm install`  
+   - `npm run dev`
 
-### Frontend
+The frontend depends on the backend API; it will not function correctly without it.
 
-Clone the repo and `cd Kitsune/`.  
-Open `.env` file and change the port. if you are using the above proxy and pocketbase then you are good to go. Then,
+### Production / Render (overview)
 
-```
-npm install
-npm run dev
-```
+- Build Docker images using the provided Dockerfiles (frontend and backend separately).  
+- Provision PostgreSQL and apply Alembic migrations before serving traffic.  
+- Mount persistent storage for `backend/uploads/avatars` or accept avatar loss on redeploy.  
+- Configure env vars on Render: see backend/frontend READMEs for required keys.  
+- Serve frontend with `NEXT_PUBLIC_API_URL` pointing to the backend’s public URL and `NEXT_PUBLIC_PROXY_URL` set to your HLS proxy.
 
-### Using Docker
+## PocketBase Status
 
-There is a `docker-compose.yaml` file which you can use to run the both frontend and server.  
-Simply run `docker compose up -d`.
+PocketBase is deprecated and not used. The authoritative backend is FastAPI.
 
-## Support
+## Further documentation
 
-Join the Discord server: <https://discord.gg/6yAJ3XDHTt>
+- Backend: [`backend/README.md`](backend/README.md)
+- Frontend: [`frontend/README.md`](frontend/README.md)
+- Roadmap: [`ROADMAP.md`](ROADMAP.md)
