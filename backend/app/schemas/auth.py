@@ -1,16 +1,16 @@
 from pydantic import BaseModel, EmailStr, Field
 
 
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str | None = None
-    token_type: str = Field(default="bearer")
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
 
 
-class Credentials(BaseModel):
+class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
 
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = Field(default="bearer")
