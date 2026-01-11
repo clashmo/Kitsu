@@ -18,7 +18,8 @@ export function isLocalStorageAvailable(): boolean {
  * @returns The value or null if not found or SSR
  */
 export function getLocalStorageItem(key: string): string | null {
-  return safeLocalStorageGet<string | null>(key, null);
+  const value = safeLocalStorageGet<string | null>(key, null);
+  return typeof value === "string" ? value : null;
 }
 
 /**

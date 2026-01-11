@@ -2,6 +2,8 @@
  * SSR-safe localStorage helpers.
  * These helpers never throw on the server and always return a fallback value.
  */
+export function safeLocalStorageGet(key: string, fallback: string): string;
+export function safeLocalStorageGet<T>(key: string, fallback: T): T;
 export function safeLocalStorageGet<T>(key: string, fallback: T): T {
   if (typeof window === "undefined" || !window.localStorage) {
     return fallback;
@@ -14,7 +16,7 @@ export function safeLocalStorageGet<T>(key: string, fallback: T): T {
       return JSON.parse(raw) as T;
     } catch {
       if (typeof fallback === "string") {
-        return raw as unknown as T;
+        return raw as T;
       }
       return fallback;
     }
