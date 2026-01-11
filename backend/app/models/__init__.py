@@ -4,6 +4,7 @@ from .collection import Collection
 from .episode import Episode
 from .favorite import Favorite
 from .release import Release
+from .refresh_token import RefreshToken
 from .user import User
 from .view import View
 
@@ -16,5 +17,5 @@ __all__ = [
     "Collection",
     "Favorite",
     "View",
+    "RefreshToken",
 ]
-
