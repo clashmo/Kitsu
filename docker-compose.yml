@@ -4,8 +4,8 @@ services:
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgresql+asyncpg://kitsu:kitsu@postgres:5432/kitsu
-      - SECRET_KEY=${SECRET_KEY:?set SECRET_KEY}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-kitsu}:${POSTGRES_PASSWORD:-kitsu}@postgres:5432/${POSTGRES_DB:-kitsu}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY environment variable is required for production deployment}
       - ALLOWED_ORIGINS=http://localhost:3000
       - DEBUG=${DEBUG:-false}
     ports:
@@ -16,9 +16,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=kitsu
-      - POSTGRES_PASSWORD=kitsu
-      - POSTGRES_DB=kitsu
+      - POSTGRES_USER=${POSTGRES_USER:-kitsu}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_DB=${POSTGRES_DB:-kitsu}
     ports:
       - "5432:5432"
     volumes:
