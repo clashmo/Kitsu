@@ -1,29 +1,24 @@
-from datetime import datetime
+from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..crud.episode import get_episodes_by_release
+from ..crud.release import get_release_by_id
 from ..dependencies import get_db
-from ..schemas.episode import EpisodeCreate, EpisodeRead
+from ..schemas.episode import EpisodeListItem
 
 router = APIRouter(prefix="/episodes", tags=["episodes"])
 
 
-@router.get("/", response_model=list[EpisodeRead])
-async def list_episodes(db: AsyncSession = Depends(get_db)) -> list[EpisodeRead]:
-    # TODO: Retrieve episodes from database.
-    return []
-
-
-@router.post("/", response_model=EpisodeRead, status_code=201)
-async def create_episode(payload: EpisodeCreate, db: AsyncSession = Depends(get_db)) -> EpisodeRead:
-    # TODO: Persist episode to database.
-    return EpisodeRead(
-        id=0,
-        anime_id=payload.anime_id,
-        number=payload.number,
-        title=payload.title,
-        synopsis=payload.synopsis,
-        aired_at=payload.aired_at or datetime.now(),
-    )
-
+@router.get("/", response_model=list[EpisodeListItem])
+async def list_episodes(
+    release_id: UUID = Query(...),
+    db: AsyncSession = Depends(get_db),
+) -> list[EpisodeListItem]:
+    release = await get_release_by_id(db, release_id)
+    if release is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Release not found"
+        )
+    return await get_episodes_by_release(db, release_id)

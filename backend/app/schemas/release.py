@@ -1,19 +1,25 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 
-class ReleaseBase(BaseModel):
-    anime_id: int
+class ReleaseRead(BaseModel):
+    id: UUID
+    anime_id: UUID
+    title: str
+    year: int | None = None
     status: str | None = None
-    released_at: datetime | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ReleaseCreate(ReleaseBase):
-    pass
-
-
-class ReleaseRead(ReleaseBase):
-    id: int
+class ReleaseListItem(BaseModel):
+    id: UUID
+    anime_id: UUID
+    title: str
+    year: int | None = None
+    status: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

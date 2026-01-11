@@ -1,4 +1,9 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+import uuid
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 
@@ -6,10 +11,17 @@ from .base import Base
 class Episode(Base):
     __tablename__ = "episodes"
 
-    id = Column(Integer, primary_key=True, index=True)
-    anime_id = Column(Integer, ForeignKey("anime.id", ondelete="CASCADE"), nullable=False)
-    number = Column(Integer, nullable=False)
-    title = Column(String(255), nullable=False)
-    synopsis = Column(Text)
-    aired_at = Column(DateTime(timezone=True))
-
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    release_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("releases.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

@@ -1,21 +1,22 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 
-class EpisodeBase(BaseModel):
-    anime_id: int
+class EpisodeRead(BaseModel):
+    id: UUID
+    release_id: UUID
     number: int
-    title: str
-    synopsis: str | None = None
-    aired_at: datetime | None = None
+    title: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-class EpisodeCreate(EpisodeBase):
-    pass
-
-
-class EpisodeRead(EpisodeBase):
-    id: int
+class EpisodeListItem(BaseModel):
+    id: UUID
+    number: int
+    title: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
