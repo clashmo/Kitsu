@@ -61,6 +61,8 @@ async def save_avatar_file(upload: UploadFile) -> str:
                 chunk = await upload.read(min(_CHUNK_SIZE, remaining))
                 if not chunk:
                     break
+                if total_bytes + len(chunk) > _MAX_AVATAR_SIZE:
+                    raise ValueError("Avatar file is too large.")
                 buffer.write(chunk)
                 total_bytes += len(chunk)
     except Exception:

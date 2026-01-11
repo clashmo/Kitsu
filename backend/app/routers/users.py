@@ -26,7 +26,6 @@ async def update_current_user_profile(
     db: AsyncSession = Depends(get_db),
 ) -> UserRead:
     if avatar is None:
-        await db.refresh(current_user)
         return current_user
 
     previous_avatar = current_user.avatar
