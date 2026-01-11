@@ -2,14 +2,19 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { env } from "next-runtime-env";
 import { useAuthStore } from "@/store/auth-store";
 
-const baseURL = env("NEXT_PUBLIC_API_URL") || "";
+const baseURL =
+  env("NEXT_PUBLIC_API_BASE_URL") ||
+  env("NEXT_PUBLIC_API_URL") ||
+  "";
 
 export const api = axios.create({
   baseURL,
+  timeout: 10000,
 });
 
 const authClient = axios.create({
   baseURL,
+  timeout: 10000,
 });
 
 type TokenPayload = {

@@ -10,6 +10,7 @@ const Loading = () => {
           height={100}
           width={100}
           unoptimized
+          priority
           alt="loader"
           className="h-full w-full object-cover"
           suppressHydrationWarning
@@ -20,4 +21,3 @@ const Loading = () => {
 };
 
 export default Loading;
-

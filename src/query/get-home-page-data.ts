@@ -26,39 +26,60 @@ const mapAnimeList = (animes: BackendAnime[]) =>
   }));
 
 const getHomePageData = async () => {
-  const res = await api.get<BackendAnime[]>("/anime", {
-    params: { limit: 20, offset: 0 },
-  });
-  const mapped = mapAnimeList(res.data || []);
-  const spotlightAnimes = mapped.slice(0, 5).map((anime, idx) => ({
-    rank: idx + 1,
-    id: anime.id,
-    name: anime.name,
-    description: "",
-    poster: anime.poster,
-    jname: anime.jname,
-    episodes: anime.episodes,
-    type: anime.type,
-    otherInfo: [],
-  }));
-
-  // Backend currently exposes a single anime list; reuse it across sections until dedicated endpoints exist
-  return {
-    spotlightAnimes,
-    trendingAnimes: mapped,
-    latestEpisodeAnimes: mapped,
-    topUpcomingAnimes: mapped,
+  const emptyData: IAnimeData = {
+    spotlightAnimes: [],
+    trendingAnimes: [],
+    latestEpisodeAnimes: [],
+    topUpcomingAnimes: [],
     top10Animes: {
-      today: mapped.slice(0, 10),
-      week: mapped.slice(0, 10),
-      month: mapped.slice(0, 10),
+      today: [],
+      week: [],
+      month: [],
     },
-    topAiringAnimes: mapped,
-    mostPopularAnimes: mapped,
-    mostFavoriteAnimes: mapped,
-    latestCompletedAnimes: mapped,
+    topAiringAnimes: [],
+    mostPopularAnimes: [],
+    mostFavoriteAnimes: [],
+    latestCompletedAnimes: [],
     genres: [],
-  } as IAnimeData;
+  };
+
+  try {
+    const res = await api.get<BackendAnime[]>("/anime", {
+      params: { limit: 20, offset: 0 },
+    });
+    const mapped = mapAnimeList(res.data || []);
+    const spotlightAnimes = mapped.slice(0, 5).map((anime, idx) => ({
+      rank: idx + 1,
+      id: anime.id,
+      name: anime.name,
+      description: "",
+      poster: anime.poster,
+      jname: anime.jname,
+      episodes: anime.episodes,
+      type: anime.type,
+      otherInfo: [],
+    }));
+
+    return {
+      ...emptyData,
+      spotlightAnimes,
+      trendingAnimes: mapped,
+      latestEpisodeAnimes: mapped,
+      topUpcomingAnimes: mapped,
+      top10Animes: {
+        today: mapped.slice(0, 10),
+        week: mapped.slice(0, 10),
+        month: mapped.slice(0, 10),
+      },
+      topAiringAnimes: mapped,
+      mostPopularAnimes: mapped,
+      mostFavoriteAnimes: mapped,
+      latestCompletedAnimes: mapped,
+    };
+  } catch (error) {
+    console.error("Failed to load home page data", error);
+    return emptyData;
+  }
 };
 
 export const useGetHomePageData = () => {
@@ -68,5 +89,6 @@ export const useGetHomePageData = () => {
         refetchOnWindowFocus: false,
         staleTime: 1000 * 60 * 5, // 5 minutes
         cacheTime: 1000 * 60 * 10, // 10 minutes
+        retry: false,
     });
 };

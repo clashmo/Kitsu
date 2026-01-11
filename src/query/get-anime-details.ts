@@ -22,68 +22,98 @@ type BackendRelease = {
 };
 
 const getAnimeDetails = async (animeId: string) => {
-  const [animeRes, releasesRes] = await Promise.all([
-    api.get<BackendAnime>(`/anime/${animeId}`),
-    api.get<BackendRelease[]>("/releases", { params: { limit: 100, offset: 0 } }),
-  ]);
-
-  const anime = animeRes.data;
-  const releases =
-    (releasesRes.data || []).filter((release) => release.anime_id === animeId) ||
-    [];
-
-  const seasons = releases.map((release, idx) => ({
-    id: release.id,
-    name: release.title,
-    title: release.title,
-    poster: PLACEHOLDER_POSTER,
-    isCurrent: idx === 0,
-  }));
-
-  const mapped: IAnimeDetails = {
+  const emptyDetails: IAnimeDetails = {
     anime: {
       info: {
-        id: anime.id,
+        id: animeId,
         anilistId: 0,
         malId: 0,
-        name: anime.title,
+        name: "",
         poster: PLACEHOLDER_POSTER,
-        description: anime.description || "",
+        description: "",
         stats: {
-          rating: anime.status || "",
+          rating: "",
           quality: "",
           episodes: { sub: 0, dub: 0 },
-          type: anime.status || "Unknown",
+          type: "Unknown",
           duration: "",
         },
         promotionalVideos: [],
         charactersVoiceActors: [],
       },
       moreInfo: {
-        japanese: anime.title_original || anime.title,
+        japanese: "",
         synonyms: "",
-        aired: anime.year ? anime.year.toString() : "N/A",
+        aired: "N/A",
         premiered: "",
         duration: "",
-        status: anime.status || "Unknown",
+        status: "Unknown",
         malscore: "",
         genres: [],
         studios: "",
         producers: [],
       },
     },
-    seasons,
+    seasons: [],
     mostPopularAnimes: [],
     relatedAnimes: [],
     recommendedAnimes: [],
   };
 
-  return mapped;
+  try {
+    const [animeRes, releasesRes] = await Promise.all([
+      api.get<BackendAnime>(`/anime/${animeId}`),
+      api.get<BackendRelease[]>("/releases", { params: { limit: 100, offset: 0 } }),
+    ]);
+
+    const anime = animeRes.data;
+    const releases =
+      (releasesRes.data || []).filter((release) => release.anime_id === animeId) ||
+      [];
+
+    const seasons = releases.map((release, idx) => ({
+      id: release.id,
+      name: release.title,
+      title: release.title,
+      poster: PLACEHOLDER_POSTER,
+      isCurrent: idx === 0,
+    }));
+
+    return {
+      ...emptyDetails,
+      anime: {
+        info: {
+          ...emptyDetails.anime.info,
+          id: anime.id,
+          name: anime.title,
+          description: anime.description || "",
+          stats: {
+            rating: anime.status || "",
+            quality: "",
+            episodes: { sub: 0, dub: 0 },
+            type: anime.status || "Unknown",
+            duration: "",
+          },
+        },
+        moreInfo: {
+          ...emptyDetails.anime.moreInfo,
+          japanese: anime.title_original || anime.title,
+          aired: anime.year ? anime.year.toString() : "N/A",
+          status: anime.status || "Unknown",
+        },
+      },
+      seasons,
+    };
+  } catch (error) {
+    console.error("Failed to fetch anime details", error);
+    return emptyDetails;
+  }
 };
 
 export const useGetAnimeDetails = (animeId: string) => {
   return useQuery({
     queryFn: () => getAnimeDetails(animeId),
     queryKey: [GET_ANIME_DETAILS, animeId],
+    retry: false,
   });
 };

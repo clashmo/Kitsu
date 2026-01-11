@@ -24,6 +24,8 @@ const ContinueWatching = (props: Props) => {
   const { auth } = useAuthStore();
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const watchedAnimes: {
       anime: { id: string; title: string; poster: string };
       episodes: string[];

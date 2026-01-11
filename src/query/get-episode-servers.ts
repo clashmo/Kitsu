@@ -4,12 +4,28 @@ import { IEpisodeServers } from "@/types/episodes";
 import { useQuery } from "react-query";
 
 const getEpisodeServers = async (episodeId: string) => {
-  const res = await axios.get("/api/episode/servers", {
-    params: {
-      animeEpisodeId: decodeURIComponent(episodeId),
-    },
-  });
-  return res.data.data as IEpisodeServers;
+  const fallback: IEpisodeServers = {
+    episodeId: "",
+    episodeNo: "",
+    sub: [],
+    dub: [],
+    raw: [],
+  };
+
+  if (!episodeId) return fallback;
+
+  try {
+    const res = await axios.get("/api/episode/servers", {
+      params: {
+        animeEpisodeId: decodeURIComponent(episodeId),
+      },
+      timeout: 10000,
+    });
+    return res.data.data as IEpisodeServers;
+  } catch (error) {
+    console.error("Failed to fetch episode servers", error);
+    return fallback;
+  }
 };
 
 export const useGetEpisodeServers = (episodeId: string) => {
@@ -17,5 +33,7 @@ export const useGetEpisodeServers = (episodeId: string) => {
     queryFn: () => getEpisodeServers(episodeId),
     queryKey: [GET_EPISODE_SERVERS, episodeId],
     refetchOnWindowFocus: false,
+    enabled: Boolean(episodeId),
+    retry: false,
   });
 };

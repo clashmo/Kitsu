@@ -28,12 +28,15 @@ const HeroSection = (props: IHeroSectionProps) => {
   const [api, setApi] = React.useState<CarouselApi>();
 
   if (props.isDataLoading) return <LoadingSkeleton />;
+  if (!Array.isArray(props.spotlightAnime) || props.spotlightAnime.length === 0) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="h-[80vh] w-full relative">
       <Carousel className="w-full" setApi={setApi} opts={{}}>
         <CarouselContent className="">
-          {props?.spotlightAnime.map((anime, index) => (
+          {props.spotlightAnime.map((anime, index) => (
             <CarouselItem key={index}>
               <HeroCarouselItem anime={anime} />
             </CarouselItem>
