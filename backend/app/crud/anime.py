@@ -4,6 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.anime import Anime
+from .base import CRUDBase
+
+anime_crud = CRUDBase[Anime](Anime)
 
 
 async def get_anime_list(

@@ -4,6 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.favorite import Favorite
+from .base import CRUDBase
+
+favorite_crud = CRUDBase[Favorite](Favorite)
 
 
 async def add_favorite(

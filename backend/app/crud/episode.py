@@ -4,6 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.episode import Episode
+from .base import CRUDBase
+
+episode_crud = CRUDBase[Episode](Episode)
 
 
 async def get_episodes_by_release(

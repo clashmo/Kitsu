@@ -4,6 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.release import Release
+from .base import CRUDBase
+
+release_crud = CRUDBase[Release](Release)
 
 
 async def get_releases(
