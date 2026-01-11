@@ -16,7 +16,6 @@ class Settings(BaseModel):
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
     secret_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(default=30)
-    refresh_token_expire_days: int = Field(default=14)
     algorithm: str = Field(default="HS256")
 
     @classmethod
@@ -41,12 +40,6 @@ class Settings(BaseModel):
                 os.getenv(
                     "ACCESS_TOKEN_EXPIRE_MINUTES",
                     cls.model_fields["access_token_expire_minutes"].default,
-                )
-            ),
-            refresh_token_expire_days=int(
-                os.getenv(
-                    "REFRESH_TOKEN_EXPIRE_DAYS",
-                    cls.model_fields["refresh_token_expire_days"].default,
                 )
             ),
             algorithm=os.getenv("ALGORITHM", cls.model_fields["algorithm"].default),
