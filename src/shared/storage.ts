@@ -2,6 +2,16 @@
  * SSR-safe localStorage helpers.
  * These helpers never throw on the server and always return a fallback value.
  */
+export function safeLocalStorageGet(
+  key: string,
+  fallback: null,
+  parseJson?: boolean,
+): string | null;
+export function safeLocalStorageGet<T>(
+  key: string,
+  fallback: T,
+  parseJson?: boolean,
+): T;
 export function safeLocalStorageGet<T>(
   key: string,
   fallback: T,
