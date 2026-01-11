@@ -41,3 +41,4 @@ next-env.d.ts
 # python artifacts
 __pycache__/
 *.py[cod]
+.venv/
