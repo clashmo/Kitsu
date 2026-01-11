@@ -1,5 +1,5 @@
 import { GET_EPISODE_DATA } from "@/constants/query-keys";
-import { api } from "@/lib/api";
+import axios from "axios";
 import { IEpisodeSource } from "@/types/episodes";
 import { useQuery } from "react-query";
 
@@ -8,7 +8,7 @@ const getEpisodeData = async (
   server: string | undefined,
   subOrDub: string,
 ) => {
-  const res = await api.get("/api/episode/sources", {
+  const res = await axios.get("/api/episode/sources", {
     params: {
       animeEpisodeId: decodeURIComponent(episodeId),
       server: server,

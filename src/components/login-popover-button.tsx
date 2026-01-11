@@ -3,13 +3,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Button from "./common/custom-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
-import DiscordIcon from "@/icons/discord";
-import { pb } from "@/lib/pocketbase";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
+import { api } from "@/lib/api";
 
 type FormData = {
-  username: string;
   email: string;
   password: string;
   confirm_password: string;
@@ -18,7 +16,6 @@ type FormData = {
 function LoginPopoverButton() {
   const auth = useAuthStore();
   const [formData, setFormData] = useState<FormData>({
-    username: "",
     email: "",
     password: "",
     confirm_password: "",
@@ -27,30 +24,50 @@ function LoginPopoverButton() {
 
   const loginWithEmail = async () => {
     try {
-      if (formData.username === "" || formData.password === "") {
+      if (formData.email === "" || formData.password === "") {
         toast.error("Please fill in all fields", {
           style: { background: "red" },
         });
         return;
       }
 
-      await pb
-        .collection("users")
-        .authWithPassword(formData.username, formData.password);
+      const { data } = await api.post("/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
 
-      if (pb.authStore.isValid && pb.authStore.record) {
-        toast.success("Login successful", { style: { background: "green" } });
-        clearForm();
-        auth.setAuth({
-          id: pb.authStore.record.id,
-          email: pb.authStore.record.email,
-          username: pb.authStore.record.username,
-          avatar: pb.authStore.record.avatar,
-          collectionId: pb.authStore.record.collectionId,
-          collectionName: pb.authStore.record.collectionName,
-          autoSkip: pb.authStore.record.autoSkip,
-        });
+      const tokens = {
+        accessToken:
+          (data as any).access_token ||
+          (data as any).accessToken ||
+          (data as any).token,
+        refreshToken:
+          (data as any).refresh_token || (data as any).refreshToken,
+      };
+
+      let userEmail = formData.email;
+      let userId: string | undefined;
+      try {
+        const profile = await api.get("/users/me");
+        userEmail = (profile.data as any)?.email || userEmail;
+        userId = (profile.data as any)?.id;
+      } catch {
+        // ignore profile errors and fallback to form values
       }
+
+      toast.success("Login successful", { style: { background: "green" } });
+      clearForm();
+      auth.setAuth({
+        id: userId,
+        email: userEmail,
+        username: userEmail?.split("@")[0],
+        avatar: "",
+        collectionId: "",
+        collectionName: "",
+        autoSkip: false,
+        accessToken: tokens.accessToken || "",
+        refreshToken: tokens.refreshToken || "",
+      });
     } catch (e) {
       console.error("Login error:", e);
       toast.error("Invalid username or password", {
@@ -60,78 +77,74 @@ function LoginPopoverButton() {
   };
 
   const signupWithEmail = async () => {
-    if (
-      formData.username === "" ||
-      formData.password === "" ||
-      formData.email === "" ||
-      formData.confirm_password === ""
-    ) {
+    if (formData.password === "" || formData.email === "" || formData.confirm_password === "") {
       toast.error("Please fill in all fields", {
         style: { background: "red" },
       });
       return;
     }
 
+    if (formData.password !== formData.confirm_password) {
+      toast.error("Passwords do not match", {
+        style: { background: "red" },
+      });
+      return;
+    }
+
     try {
-      const user = await pb.collection("users").create({
-        username: formData.username,
+      const { data } = await api.post("/auth/register", {
         email: formData.email,
         password: formData.password,
-        passwordConfirm: formData.confirm_password,
       });
 
-      if (user) {
-        toast.success("Account created successfully. Please login.", {
-          style: { background: "green" },
-        });
-        clearForm();
-        setTabValue("login");
+      toast.success("Account created successfully. You are now logged in.", {
+        style: { background: "green" },
+      });
+      const tokens = {
+        accessToken:
+          (data as any).access_token ||
+          (data as any).accessToken ||
+          (data as any).token,
+        refreshToken:
+          (data as any).refresh_token || (data as any).refreshToken,
+      };
+
+      let userEmail = formData.email;
+      let userId: string | undefined;
+      try {
+        const profile = await api.get("/users/me");
+        userEmail = (profile.data as any)?.email || userEmail;
+        userId = (profile.data as any)?.id;
+      } catch {
+        // ignore profile errors and fallback
       }
-    } catch (e: any) {
-      if (e.response?.data) {
-        for (const key in e.response?.data) {
-          toast.error(`${key}: ${e.response.data[key].message}`, {
-            style: { background: "red" },
-          });
-        }
-      } else {
-        toast.error("Signup failed. Please try again.", {
-          style: { background: "red" },
-        });
-      }
+
+      auth.setAuth({
+        id: userId,
+        email: userEmail,
+        username: userEmail?.split("@")[0],
+        avatar: "",
+        collectionId: "",
+        collectionName: "",
+        autoSkip: false,
+        accessToken: tokens.accessToken || "",
+        refreshToken: tokens.refreshToken || "",
+      });
+      clearForm();
+      setTabValue("login");
+    } catch {
+      toast.error("Signup failed. Please try again.", {
+        style: { background: "red" },
+      });
     }
   };
 
   const clearForm = () => {
     setFormData({
-      username: "",
       email: "",
       password: "",
       confirm_password: "",
     });
-  };
-
-  const loginWithDiscord = async () => {
-    const res = await pb.collection("users").authWithOAuth2({
-      provider: "discord",
-    });
-
-    if (pb.authStore.isValid && pb.authStore.record) {
-      await pb.collection("users").update(pb.authStore.record?.id!, {
-        username: res.meta?.username,
-      });
-
-      toast.success("Login successful", { style: { background: "green" } });
-      auth.setAuth({
-        id: pb.authStore.record.id,
-        email: pb.authStore.record.email,
-        username: pb.authStore.record.username,
-        avatar: pb.authStore.record.avatar,
-        collectionId: pb.authStore.record.collectionId,
-        collectionName: pb.authStore.record.collectionName,
-        autoSkip: pb.authStore.record.autoSkip,
-      });
-    }
   };
 
   return (
@@ -163,15 +176,15 @@ function LoginPopoverButton() {
           </TabsList>
           <TabsContent value="login" className="flex flex-col gap-2">
             <div className="mt-2">
-              <p className="text-gray-300 text-xs">Email or Username:</p>
+              <p className="text-gray-300 text-xs">Email:</p>
               <Input
                 required
                 onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
+                  setFormData({ ...formData, email: e.target.value })
                 }
                 type="text"
-                value={formData.username}
-                placeholder="Enter your email/username"
+                value={formData.email}
+                placeholder="Enter your email"
               />
             </div>
             <div>
@@ -191,33 +204,12 @@ function LoginPopoverButton() {
               className="w-full text-xs"
               size="sm"
               type="submit"
-              onClick={loginWithEmail}
-            >
-              Login
-            </Button>
-            <hr className="text-white text-xs text-center" />
-            <Button
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-800 text-white w-full text-xs"
-              size="sm"
-              onClick={loginWithDiscord}
-            >
-              <DiscordIcon className="mr-2" />
-              Login with Discord
-            </Button>
+                onClick={loginWithEmail}
+              >
+                Login
+              </Button>
           </TabsContent>
           <TabsContent value="signup" className="flex flex-col gap-2">
-            <div>
-              <p className="text-gray-300 text-xs">Username:</p>
-              <Input
-                required
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
-                type="text"
-                placeholder="Enter your username"
-              />
-            </div>
             <div>
               <p className="text-gray-300 text-xs">Email:</p>
               <Input
@@ -259,16 +251,6 @@ function LoginPopoverButton() {
               onClick={signupWithEmail}
             >
               Signup
-            </Button>
-            <hr className="text-white text-xs text-center" />
-            <Button
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-800 text-white w-full text-xs"
-              size="sm"
-              onClick={loginWithDiscord}
-            >
-              <DiscordIcon className="mr-2" />
-              Signup with Discord
             </Button>
           </TabsContent>
         </Tabs>

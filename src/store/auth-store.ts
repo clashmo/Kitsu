@@ -2,13 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type IAuth = {
-  id: string;
-  avatar: string;
-  email: string;
-  username: string;
-  collectionId: string;
-  collectionName: string;
-  autoSkip: boolean;
+  id?: string;
+  avatar?: string;
+  email?: string;
+  username?: string;
+  collectionId?: string;
+  collectionName?: string;
+  autoSkip?: boolean;
+  accessToken: string;
+  refreshToken: string;
 };
 
 export interface IAuthStore {
@@ -25,7 +27,7 @@ export const useAuthStore = create<IAuthStore>()(
       auth: null,
       setAuth: (state: IAuth) => set({ auth: state }),
       clearAuth: () => set({ auth: null }),
-      isRefreshing: true,
+      isRefreshing: false,
       setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
     }),
     {

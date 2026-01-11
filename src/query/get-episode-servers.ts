@@ -1,10 +1,10 @@
 import { GET_EPISODE_SERVERS } from "@/constants/query-keys";
-import { api } from "@/lib/api";
+import axios from "axios";
 import { IEpisodeServers } from "@/types/episodes";
 import { useQuery } from "react-query";
 
 const getEpisodeServers = async (episodeId: string) => {
-  const res = await api.get("/api/episode/servers", {
+  const res = await axios.get("/api/episode/servers", {
     params: {
       animeEpisodeId: decodeURIComponent(episodeId),
     },
