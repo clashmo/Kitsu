@@ -29,7 +29,7 @@ def _is_allowed_image(header: bytes) -> bool:
         return True
     if header.startswith(b"BM"):  # BMP
         return True
-    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":  # WEBP
+    if len(header) >= 12 and header.startswith(b"RIFF") and header[8:12] == b"WEBP":  # WEBP
         return True
     return False
 
@@ -52,10 +52,12 @@ async def save_avatar_file(upload: UploadFile) -> str:
         with destination.open("wb") as buffer:
             buffer.write(header)
             while True:
-                chunk = await upload.read(_CHUNK_SIZE)
+                remaining = _MAX_AVATAR_SIZE - total_bytes
+                read_size = 1 if remaining <= 0 else min(_CHUNK_SIZE, remaining)
+                chunk = await upload.read(read_size)
                 if not chunk:
                     break
-                if total_bytes + len(chunk) > _MAX_AVATAR_SIZE:
+                if remaining <= 0 or total_bytes + len(chunk) > _MAX_AVATAR_SIZE:
                     raise ValueError("Avatar file is too large.")
                 buffer.write(chunk)
                 total_bytes += len(chunk)
