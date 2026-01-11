@@ -32,10 +32,18 @@ npm run dev
 
 ## Продакшн/Render
 
-1. Соберите образ с помощью корневого `Dockerfile` (Next.js standalone).
-2. Настройте `NEXT_PUBLIC_API_URL` (публичный адрес бэкенда) и `NEXT_PUBLIC_PROXY_URL` (публичный адрес HLS-прокси) в настройках Render.
-3. Разверните контейнер, откройте порт 3000.
-4. Убедитесь, что бэкенд доступен с фронтенда; иначе страницы каталога и просмотр не работают.
+Вариант A (рекомендуемый): Render Web Service (Node.js)
+1. Build command: `npm install && npm run build`
+2. Start command: `npm run start`
+3. Переменные окружения: `NEXT_PUBLIC_API_URL=https://<публичный-backend>`, `NEXT_PUBLIC_PROXY_URL=https://<публичный-proxy>`
+4. Порт сервиса: 3000 (Render HTTP порт по умолчанию)
+
+Вариант B: Docker Web Service
+1. Используйте корневой `Dockerfile` (Next.js standalone образ).
+2. Передайте те же переменные `NEXT_PUBLIC_API_URL` и `NEXT_PUBLIC_PROXY_URL`.
+3. Откройте порт 3000.
+
+Убедитесь, что бэкенд доступен с фронтенда; иначе страницы каталога и просмотр не работают.
 
 ## Зависимость от бэкенда
 
