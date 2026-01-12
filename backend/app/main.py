@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI):
     try:
         run_migrations()
     except RuntimeError as exc:
-        logger.exception("Alembic migration execution failed during startup")
+        logger.exception("Application startup aborted due to migration failure")
         raise
 
     try:
