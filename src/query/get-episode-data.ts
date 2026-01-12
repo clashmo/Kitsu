@@ -46,7 +46,6 @@ export const useGetEpisodeData = (
     queryKey: queryKeys.episodeData(episodeId, server, subOrDub),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 3,
-    refetchOnReconnect: false,
     enabled: Boolean(episodeId) && server !== "",
     retry: false,
   });

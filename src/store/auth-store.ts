@@ -1,9 +1,5 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { createStoreFactory } from "./store-factory";
 
 export type IAuth = {
   id?: string;
@@ -23,67 +19,29 @@ export interface IAuthStore {
   clearAuth: () => void;
   isRefreshing: boolean;
   setIsRefreshing: (val: boolean) => void;
-  isAuthReady: boolean;
-  setIsAuthReady: (val: boolean) => void;
 }
 
-const createAuthStore = () =>
-  create<IAuthStore>()(
-    persist(
-      (set) => ({
-        auth: null,
-        setAuth: (state: IAuth) => set({ auth: state }),
-        clearAuth: () => set({ auth: null }),
-        isRefreshing: false,
-        setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
-        isAuthReady: false,
-        setIsAuthReady: (val: boolean) => set({ isAuthReady: val }),
+export const useAuthStore = create<IAuthStore>()(
+  persist(
+    (set) => ({
+      auth: null,
+      setAuth: (state: IAuth) => set({ auth: state }),
+      clearAuth: () => set({ auth: null }),
+      isRefreshing: false,
+      setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
+    }),
+    {
+      name: "auth",
+      partialize: (state) => ({
+        auth: state.auth,
       }),
-      {
-        name: "auth",
-        partialize: (state) => ({
-          auth: state.auth,
-        }),
-        version: 0,
-      },
-    ),
-  );
-
-export const { useBoundStore: useAuthStore } =
-  createStoreFactory<IAuthStore>(createAuthStore);
+      version: 0,
+    },
+  ),
+);
 
 export const useAuthHydrated = () => {
-  const [isClient, setIsClient] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) {
-      return;
-    }
-
-    const persist = useAuthStore.persist;
-    if (!persist) {
-      setHydrated(true);
-      return;
-    }
-
-    if (persist.hasHydrated?.()) {
-      setHydrated(true);
-      return;
-    }
-
-    const unsub = persist.onFinishHydration?.(() => setHydrated(true));
-
-    return () => {
-      unsub?.();
-    };
-  }, [isClient]);
-
-  return isClient && hydrated;
+  return useAuthStore.persist.hasHydrated();
 };
 
 export const useAuthSelector = <T>(selector: (state: IAuthStore) => T) =>

@@ -115,9 +115,6 @@ export const useGetAnimeDetails = (animeId: string) => {
     queryFn: () => getAnimeDetails(animeId),
     queryKey: queryKeys.animeDetails(animeId),
     staleTime: 1000 * 60 * 5,
-    enabled: Boolean(animeId),
-    refetchOnMount: false,
-    refetchOnReconnect: false,
     refetchOnWindowFocus: false,
     retry: false,
   });
