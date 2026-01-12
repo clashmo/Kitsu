@@ -36,9 +36,11 @@ const menuItems: Array<{ title: string; href?: string }> = [
 ];
 
 const NavBar = () => {
-  const auth = useAuthSelector((state) => state.auth);
-  const clearAuth = useAuthSelector((state) => state.clearAuth);
-  const isAuthReady = useAuthSelector((state) => state.isAuthReady);
+  const { auth, clearAuth, isAuthReady } = useAuthSelector((state) => ({
+    auth: state.auth,
+    clearAuth: state.clearAuth,
+    isAuthReady: state.isAuthReady,
+  }));
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;

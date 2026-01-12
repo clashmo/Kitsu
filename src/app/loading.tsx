@@ -3,8 +3,8 @@ import Image from "next/image";
 
 const Loading = () => {
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
-      <div className="h-[10.25rem] w-auto">
+    <div className="w-full py-16 flex items-center justify-center">
+      <div className="h-[8rem] w-[8rem] rounded-xl bg-slate-800/40 flex items-center justify-center">
         <Image
           src="/loader.gif"
           height={100}
