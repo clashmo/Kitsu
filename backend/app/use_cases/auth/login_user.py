@@ -14,7 +14,9 @@ async def login_user(
         if user is None or not verify_password(password, user.password_hash):
             raise AuthError()
 
-        return await issue_tokens(session, user.id)
+        tokens = await issue_tokens(session, user.id)
+        await session.commit()
+        return tokens
     except AppError:
         await session.rollback()
         raise

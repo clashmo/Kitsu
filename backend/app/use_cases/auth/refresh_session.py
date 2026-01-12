@@ -24,7 +24,9 @@ async def refresh_session(session: AsyncSession, refresh_token: str) -> AuthToke
         user_id = stored_token.user_id
         await session.delete(stored_token)
         await session.flush()
-        return await issue_tokens(session, user_id)
+        tokens = await issue_tokens(session, user_id)
+        await session.commit()
+        return tokens
     except AppError:
         await session.rollback()
         raise
