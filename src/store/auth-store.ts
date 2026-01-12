@@ -59,7 +59,26 @@ export const useAuthHydrated = () => {
     if (!isClient) {
       return;
     }
-    setHasHydrated(useAuthStore.persist?.hasHydrated?.() ?? false);
+    const persist = useAuthStore.persist;
+    if (!persist) {
+      setHasHydrated(true);
+      return;
+    }
+
+    const applyHydrated = () => setHasHydrated(true);
+    const unsubFinish = persist.onFinishHydration?.(applyHydrated);
+    const hydrated = persist.hasHydrated?.() ?? false;
+
+    if (hydrated) {
+      setHasHydrated(true);
+      return () => {
+        unsubFinish?.();
+      };
+    }
+
+    return () => {
+      unsubFinish?.();
+    };
   }, [isClient]);
 
   return isClient && hasHydrated;
