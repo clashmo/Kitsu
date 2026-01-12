@@ -42,6 +42,11 @@ const NavBar = () => {
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
+  const authControls = auth ? (
+    <NavbarAvatar auth={auth} clearAuth={clearAuth} />
+  ) : isAuthReady ? (
+    <LoginPopoverButton />
+  ) : null;
 
   return (
     <div
@@ -85,11 +90,11 @@ const NavBar = () => {
         </div>
         <div className="w-1/3 hidden lg:flex items-center gap-5">
           <SearchBar />
-          {auth ? <NavbarAvatar auth={auth} clearAuth={clearAuth} /> : isAuthReady ? <LoginPopoverButton /> : null}
+          {authControls}
         </div>
         <div className="lg:hidden flex items-center gap-5">
           <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
-          {auth ? <NavbarAvatar auth={auth} clearAuth={clearAuth} /> : isAuthReady ? <LoginPopoverButton /> : null}
+          {authControls}
         </div>
       </Container>
     </div>

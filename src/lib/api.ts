@@ -26,7 +26,6 @@ type TokenPayload = {
   refreshToken?: string;
 };
 
-let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (error: unknown) => void;
@@ -113,7 +112,6 @@ export const refreshSession = (refreshToken: string) => {
   }
 
   if (!refreshPromise) {
-    isRefreshing = true;
     useAuthStore.getState().setIsRefreshing(true);
     refreshPromise = performRefresh(refreshToken)
       .then((token) => {
@@ -126,7 +124,6 @@ export const refreshSession = (refreshToken: string) => {
       })
       .finally(() => {
         refreshPromise = null;
-        isRefreshing = false;
         useAuthStore.getState().setIsRefreshing(false);
       });
   }
@@ -241,7 +238,7 @@ api.interceptors.response.use(
         return Promise.reject(normalizeApiError(error));
       }
 
-      if (isRefreshing) {
+      if (refreshPromise) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })

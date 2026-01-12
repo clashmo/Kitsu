@@ -36,6 +36,7 @@ const AuthBootstrap = () => {
 
       try {
         const newToken = await refreshSession(auth.refreshToken);
+        // Refresh must complete before fetching the profile to avoid unauthorized responses.
         const profile = await api.get<ProfileResponse>("/users/me");
         if (cancelled) return;
         const currentAuth = useAuthStore.getState().auth;
