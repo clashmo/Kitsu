@@ -13,6 +13,10 @@ class Settings(BaseModel):
     debug: bool = Field(default=False)
     database_url: str = Field(default="")
     allowed_origins: list[str] = Field(default_factory=list)
+    db_pool_size: int = Field(default=5)
+    db_max_overflow: int = Field(default=10)
+    db_pool_recycle: int = Field(default=1800)
+    db_pool_pre_ping: bool = Field(default=True)
     secret_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=14)
@@ -75,6 +79,19 @@ class Settings(BaseModel):
                 )
             ),
             algorithm=os.getenv("ALGORITHM", cls.model_fields["algorithm"].default),
+            db_pool_size=int(
+                os.getenv("DB_POOL_SIZE", cls.model_fields["db_pool_size"].default)
+            ),
+            db_max_overflow=int(
+                os.getenv("DB_MAX_OVERFLOW", cls.model_fields["db_max_overflow"].default)
+            ),
+            db_pool_recycle=int(
+                os.getenv("DB_POOL_RECYCLE", cls.model_fields["db_pool_recycle"].default)
+            ),
+            db_pool_pre_ping=os.getenv(
+                "DB_POOL_PRE_PING", str(cls.model_fields["db_pool_pre_ping"].default)
+            ).lower()
+            == "true",
         )
 
 

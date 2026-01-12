@@ -8,8 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import (
+    IntegrityError,
+    MultipleResultsFound,
+    NoResultFound,
+    SQLAlchemyError,
+)
 
 from .config import settings
 from .database import engine
@@ -180,6 +184,28 @@ async def handle_value_error(request: Request, exc: ValueError) -> JSONResponse:
 @app.exception_handler(IntegrityError)
 async def handle_integrity_error(request: Request, exc: IntegrityError) -> JSONResponse:
     message = "Request could not be completed due to a conflict"
+    _log_error(request, status.HTTP_409_CONFLICT, ConflictError.code, message, exc)
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content=error_payload(ConflictError.code, message),
+    )
+
+
+@app.exception_handler(NoResultFound)
+async def handle_no_result_found(request: Request, exc: NoResultFound) -> JSONResponse:
+    message = "Requested resource was not found"
+    _log_error(request, status.HTTP_404_NOT_FOUND, NotFoundError.code, message, exc)
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content=error_payload(NotFoundError.code, message),
+    )
+
+
+@app.exception_handler(MultipleResultsFound)
+async def handle_multiple_results_found(
+    request: Request, exc: MultipleResultsFound
+) -> JSONResponse:
+    message = "Multiple resources found where one expected"
     _log_error(request, status.HTTP_409_CONFLICT, ConflictError.code, message, exc)
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
