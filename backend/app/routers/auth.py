@@ -78,7 +78,7 @@ async def refresh_token(
     payload: RefreshTokenRequest, db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
     token_hash = hash_refresh_token(payload.refresh_token)
-    stored_token = await get_refresh_token_by_hash(db, token_hash)
+    stored_token = await get_refresh_token_by_hash(db, token_hash, for_update=True)
     if stored_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
@@ -99,7 +99,7 @@ async def logout(
     payload: LogoutRequest, db: AsyncSession = Depends(get_db)
 ) -> None:
     token_hash = hash_refresh_token(payload.refresh_token)
-    stored_token = await get_refresh_token_by_hash(db, token_hash)
+    stored_token = await get_refresh_token_by_hash(db, token_hash, for_update=True)
     if stored_token is None:
         return
 
