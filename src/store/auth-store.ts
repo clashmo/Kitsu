@@ -56,7 +56,7 @@ export const useAuthHydrated = () => {
   }, []);
 
   useEffect(() => {
-    if (!isClient) {
+    if (!isClient || isHydrated) {
       return;
     }
     const persist = useAuthStore.persist;
@@ -73,16 +73,15 @@ export const useAuthHydrated = () => {
     }
 
     const unsubFinish = persist.onFinishHydration
-      ? persist.onFinishHydration((state) => {
+      ? persist.onFinishHydration(() => {
           setIsHydrated(true);
-          return state;
         })
       : undefined;
 
     return () => {
       unsubFinish?.();
     };
-  }, [isClient]);
+  }, [isClient, isHydrated]);
 
   return isClient && isHydrated;
 };
