@@ -8,6 +8,11 @@ import {
   useAuthStore,
 } from "@/store/auth-store";
 
+type ProfileResponse = {
+  id?: string;
+  email?: string;
+};
+
 const AuthBootstrap = () => {
   const auth = useAuthSelector((state) => state.auth);
   const setAuth = useAuthSelector((state) => state.setAuth);
@@ -31,21 +36,23 @@ const AuthBootstrap = () => {
 
       try {
         const newToken = await refreshSession(auth.refreshToken);
-        const profile = await api.get("/users/me");
+        const profile = await api.get<ProfileResponse>("/users/me");
         if (cancelled) return;
         const currentAuth = useAuthStore.getState().auth;
         if (currentAuth) {
           setAuth({
             ...currentAuth,
-            id: (profile.data as any)?.id,
-            email: (profile.data as any)?.email,
-            username: (profile.data as any)?.email?.split("@")[0],
+            id: profile.data?.id,
+            email: profile.data?.email,
+            username: profile.data?.email?.split("@")[0],
             accessToken: newToken || currentAuth.accessToken,
             refreshToken: currentAuth.refreshToken,
           });
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
+          // eslint-disable-next-line no-console
+          console.warn("[auth] bootstrap failed", error);
           clearAuth();
         }
       } finally {
