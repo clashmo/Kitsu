@@ -29,21 +29,29 @@ export const createStoreFactory = <TState extends object>(
     return clientStore;
   };
 
+  function useBoundStoreBase(): TState;
+  function useBoundStoreBase<StateSlice>(
+    selector: Selector<TState, StateSlice>,
+    equalityFn?: EqualityChecker<StateSlice>,
+  ): StateSlice;
+  function useBoundStoreBase<StateSlice = TState>(
+    selector?: Selector<TState, StateSlice>,
+    equalityFn?: EqualityChecker<StateSlice>,
+  ) {
+    const store = getStore();
+    return selector !== undefined
+      ? store(selector, equalityFn)
+      : store();
+  }
+
   const useBoundStore = Object.assign(
-    function useBoundStoreBase<StateSlice = TState>(
-      selector?: Selector<TState, StateSlice>,
-      equalityFn?: EqualityChecker<StateSlice>,
-    ) {
-      const store = getStore();
-      return selector !== undefined
-        ? store(selector, equalityFn)
-        : store();
-    },
+    useBoundStoreBase,
     {
       getState: () => getStore().getState(),
       setState: (
         ...args: Parameters<BoundStore<TState>["setState"]>
-      ) => getStore().setState(...args),
+      ): ReturnType<BoundStore<TState>["setState"]> =>
+        getStore().setState(...args),
       subscribe: (
         ...args: Parameters<BoundStore<TState>["subscribe"]>
       ) => getStore().subscribe(...args),
