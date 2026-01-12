@@ -35,7 +35,7 @@ def upgrade() -> None:
             "last_watched_at",
             sa.DateTime(timezone=True),
             server_default=sa.func.now(),
-            server_onupdate=sa.func.now(),
+            onupdate=sa.func.now(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
