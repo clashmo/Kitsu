@@ -69,6 +69,7 @@ export const useAuthHydrated = () => {
     const hasHydrated = persist.hasHydrated?.() ?? false;
     if (hasHydrated) {
       setIsHydrated(true);
+      return;
     }
 
     const unsubFinish = persist.onFinishHydration
