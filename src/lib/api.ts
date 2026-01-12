@@ -25,12 +25,13 @@ type TokenPayload = {
   refresh_token?: string;
   refreshToken?: string;
 };
+type RefreshError = Error & { code?: "invalid_token" };
 
-let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (error: unknown) => void;
 }> = [];
+let refreshPromise: Promise<string | null> | null = null;
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((promise) => {
@@ -63,6 +64,74 @@ const resolveAccessToken = (tokens: ReturnType<typeof extractTokens>) => {
     console.warn("Using existing access token because refresh returned none");
   }
   return tokens.accessToken || fallbackToken;
+};
+
+const updateTokensFromRefresh = (tokens: ReturnType<typeof extractTokens>) => {
+  const updatedAuth = useAuthStore.getState().auth;
+  if (updatedAuth) {
+    useAuthStore
+      .getState()
+      .setAuth({
+        ...updatedAuth,
+        accessToken: tokens.accessToken || updatedAuth.accessToken,
+        refreshToken: tokens.refreshToken || updatedAuth.refreshToken,
+      });
+  }
+};
+
+/**
+ * Refreshes the session tokens with a single retry on 401 responses.
+ * @param refreshToken active refresh token for the session
+ * @param attempt current retry attempt (0 = initial)
+ */
+const performRefresh = async (refreshToken: string, attempt = 0): Promise<string | null> => {
+  try {
+    const { data } = await authClient.post("/auth/refresh", {
+      refresh_token: refreshToken,
+    });
+    const tokens = extractTokens(data as TokenPayload);
+    updateTokensFromRefresh(tokens);
+    const newToken = resolveAccessToken(tokens);
+    if (!newToken) {
+      const tokenError = new Error("No token returned from refresh") as RefreshError;
+      tokenError.code = "invalid_token";
+      throw tokenError;
+    }
+    return newToken;
+  } catch (err) {
+    const status = err instanceof AxiosError ? err.response?.status : undefined;
+    if (status === 401 && attempt < 1) {
+      // eslint-disable-next-line no-console
+      console.warn("[auth] refresh returned 401, retrying once");
+      return performRefresh(refreshToken, attempt + 1);
+    }
+    throw err;
+  }
+};
+
+export const refreshSession = (refreshToken: string) => {
+  if (!refreshToken) {
+    return Promise.reject(new Error("Missing refresh token"));
+  }
+
+  if (!refreshPromise) {
+    useAuthStore.getState().setIsRefreshing(true);
+    refreshPromise = performRefresh(refreshToken)
+      .then((token) => {
+        processQueue(null, token);
+        return token;
+      })
+      .catch((err) => {
+        processQueue(err, null);
+        throw err;
+      })
+      .finally(() => {
+        refreshPromise = null;
+        useAuthStore.getState().setIsRefreshing(false);
+      });
+  }
+
+  return refreshPromise;
 };
 
 export type ApiError = {
@@ -125,14 +194,18 @@ const navigateHome = () => {
 };
 
 let isHandlingAuthFailure = false;
+type AuthFailureReason = "unauthenticated" | "expired_session" | "invalid_token";
 
-const handleAuthFailure = () => {
+const handleAuthFailure = (reason: AuthFailureReason = "unauthenticated") => {
   if (isHandlingAuthFailure) {
     return;
   }
   isHandlingAuthFailure = true;
   try {
+    // eslint-disable-next-line no-console
+    console.info("[auth] clearing session", { reason });
     useAuthStore.getState().clearAuth();
+    useAuthStore.getState().setIsAuthReady(true);
     if (authFailureHandlers.size > 0) {
       authFailureHandlers.forEach((handler) => handler(ROUTES.HOME));
       return;
@@ -164,11 +237,11 @@ api.interceptors.response.use(
       const refreshToken = useAuthStore.getState().auth?.refreshToken;
 
       if (!refreshToken) {
-        useAuthStore.getState().clearAuth();
-        return Promise.reject(error);
+        handleAuthFailure("unauthenticated");
+        return Promise.reject(normalizeApiError(error));
       }
 
-      if (isRefreshing) {
+      if (refreshPromise) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -178,47 +251,25 @@ api.interceptors.response.use(
             }
             return api(originalRequest);
           })
-          .catch((err) => Promise.reject(err));
+          .catch((err) => Promise.reject(normalizeApiError(err)));
       }
 
-      isRefreshing = true;
-
       try {
-        const { data } = await authClient.post("/auth/refresh", {
-          refresh_token: refreshToken,
-        });
-        const tokens = extractTokens(data as TokenPayload);
-        const updatedAuth = useAuthStore.getState().auth;
-        if (updatedAuth) {
-          useAuthStore
-            .getState()
-            .setAuth({
-              ...updatedAuth,
-              accessToken: tokens.accessToken || updatedAuth.accessToken,
-              refreshToken: tokens.refreshToken || updatedAuth.refreshToken,
-            });
-        }
-        // Prefer freshly issued token; fall back to stored token only when backend omits tokens
-        // Some refresh endpoints may skip returning tokens if a session was just rotated.
-        // In that case we reuse the last known access token to avoid dropping the user abruptly.
-        const newToken = resolveAccessToken(tokens);
-        if (!newToken) {
-          processQueue(new Error("No token returned from refresh"), null);
-          useAuthStore.getState().clearAuth();
-          return Promise.reject(new Error("No token returned from refresh"));
-        }
-        processQueue(null, newToken);
+        const newToken = await refreshSession(refreshToken);
         if (originalRequest.headers && newToken) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
         return api(originalRequest);
       } catch (err) {
         trackAuthFailureError(err);
-        processQueue(err, null);
-        handleAuthFailure();
-        return Promise.reject(normalizeApiError(err));
-      } finally {
-        isRefreshing = false;
+        const normalizedRefreshError = normalizeApiError(err);
+        const status = normalizedRefreshError.status ?? (err instanceof AxiosError ? err.response?.status : undefined);
+        const refreshError = err as RefreshError;
+        const isInvalidToken = refreshError?.code === "invalid_token";
+        const reason: AuthFailureReason =
+          status === 401 ? "expired_session" : isInvalidToken ? "invalid_token" : "unauthenticated";
+        handleAuthFailure(reason);
+        return Promise.reject(normalizedRefreshError);
       }
     }
 
