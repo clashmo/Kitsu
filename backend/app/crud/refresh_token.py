@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.refresh_token import RefreshToken
@@ -35,16 +35,18 @@ async def get_refresh_token_by_hash(
 async def revoke_refresh_token(
     session: AsyncSession, user_id: uuid.UUID
 ) -> RefreshToken | None:
-    result = await session.execute(
+    latest_result = await session.execute(
         select(RefreshToken)
         .where(RefreshToken.user_id == user_id)
         .order_by(RefreshToken.created_at.desc())
+        .limit(1)
     )
-    tokens = result.scalars().all()
-    if not tokens:
+    latest_token = latest_result.scalars().first()
+    if latest_token is None:
         return None
 
-    for token in tokens:
-        token.revoked = True
+    await session.execute(
+        update(RefreshToken).where(RefreshToken.user_id == user_id).values(revoked=True)
+    )
     await session.flush()
-    return tokens[0]
+    return latest_token
