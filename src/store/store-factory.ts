@@ -55,7 +55,8 @@ export const createStoreFactory = <TState extends object>(
       ) => getStore().subscribe(...args),
       destroy: () => getStore().destroy(),
       get persist() {
-        return getStore().persist;
+        const storePersist = getStore().persist;
+        return storePersist ?? undefined;
       },
     },
   ) satisfies BoundStore<TState>;
