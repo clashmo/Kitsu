@@ -19,8 +19,6 @@ export interface IAuthStore {
   clearAuth: () => void;
   isRefreshing: boolean;
   setIsRefreshing: (val: boolean) => void;
-  isAuthReady: boolean;
-  setIsAuthReady: (val: boolean) => void;
 }
 
 export const useAuthStore = create<IAuthStore>()(
@@ -31,8 +29,6 @@ export const useAuthStore = create<IAuthStore>()(
       clearAuth: () => set({ auth: null }),
       isRefreshing: false,
       setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
-      isAuthReady: false,
-      setIsAuthReady: (val: boolean) => set({ isAuthReady: val }),
     }),
     {
       name: "auth",

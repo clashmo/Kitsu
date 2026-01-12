@@ -30,28 +30,26 @@ from .errors import (
     error_payload,
     resolve_error_code,
 )
+from .routers import (
+    anime,
+    auth,
+    collections,
+    episodes,
+    favorites,
+    releases,
+    search,
+    users,
+    views,
+    watch,
+)
 from .utils.health import check_database_connection
 from .utils.migrations import run_migrations
 
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
 
-class _PasslibBcryptVersionFilter(logging.Filter):
-    """Ignore passlib's bcrypt version warning triggered with bcrypt>=4.x."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        message = record.getMessage()
-        exc_info = record.exc_info
-        exc = exc_info[1] if exc_info else None
-
-        if record.name == "passlib.handlers.bcrypt":
-            if "error reading bcrypt version" in message:
-                return False
-            if isinstance(exc, AttributeError):
-                return False
-        return True
-
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
+
 
 def _resolve_log_level(value: str) -> int:
     level = logging.getLevelName(value)
@@ -67,22 +65,6 @@ if not logging.getLogger().handlers:
     )
 logger = logging.getLogger("kitsu")
 logger.setLevel(log_level)
-# Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
-passlib_logger = logging.getLogger("passlib.handlers.bcrypt")
-passlib_logger.addFilter(_PasslibBcryptVersionFilter())
-
-from .routers import (  # noqa: E402 - import after logging setup to prevent passlib bcrypt version warnings during module loading
-    anime,
-    auth,
-    collections,
-    episodes,
-    favorites,
-    releases,
-    search,
-    users,
-    views,
-    watch,
-)
 
 
 def _health_response(status_text: str, status_code: int) -> JSONResponse:

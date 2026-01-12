@@ -34,7 +34,6 @@ export const useGetEpisodeServers = (episodeId: string) => {
     queryKey: queryKeys.episodeServers(episodeId),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 3,
-    refetchOnReconnect: false,
     enabled: Boolean(episodeId),
     retry: false,
   });

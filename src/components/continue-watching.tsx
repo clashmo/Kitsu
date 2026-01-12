@@ -22,7 +22,7 @@ const ContinueWatching = (props: Props) => {
   const [anime, setAnime] = useState<WatchedAnime[] | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const authId = useAuthSelector((state) => state.auth?.id);
+  const auth = useAuthSelector((state) => state.auth);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -46,7 +46,7 @@ const ContinueWatching = (props: Props) => {
     }));
     setAnime(animes as WatchedAnime[]);
     setHydrated(true);
-  }, [authId]);
+  }, [auth]);
 
   const shouldShowLoadingWhenNoData =
     props.loading && (!anime || !anime.length);

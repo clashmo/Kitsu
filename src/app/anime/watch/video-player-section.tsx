@@ -19,10 +19,7 @@ import { getLocalStorageJSON, setLocalStorageJSON, removeLocalStorageItem } from
 const VideoPlayerSection = () => {
   const searchParams = useSearchParams();
   const episodeId = searchParams.get("episode");
-  const { selectedEpisode, anime } = useAnimeStore((state) => ({
-    selectedEpisode: state.selectedEpisode,
-    anime: state.anime,
-  }));
+  const { selectedEpisode, anime } = useAnimeStore();
 
   const { data: serversData } = useGetEpisodeServers(selectedEpisode);
 

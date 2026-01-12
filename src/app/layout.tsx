@@ -7,7 +7,6 @@ import Footer from "@/components/footer";
 import Script from "next/script";
 import QueryProvider from "@/providers/query-provider";
 import { PublicEnvScript } from "next-runtime-env";
-import AuthBootstrap from "@/components/auth-bootstrap";
 
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -87,7 +86,6 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <AuthBootstrap />
             <NavBar />
             {children}
             <Footer />
