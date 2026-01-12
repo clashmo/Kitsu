@@ -1,6 +1,6 @@
 import { GET_HOME_PAGE_DATA } from "@/constants/query-keys";
 import { api } from "@/lib/api";
-import { IAnimeData, SpotlightAnime, Type } from "@/types/anime";
+import { IAnimeData, SpotlightAnime, TopUpcomingAnime, Type } from "@/types/anime";
 import { QueryFunction, UseQueryOptions, useQuery } from "react-query";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
 
@@ -12,7 +12,7 @@ type BackendAnime = {
   year?: number | null;
 };
 
-const mapStatusToType = (status?: string | null): Type => {
+const mapStatusToType = (status?: string | null): Type | undefined => {
   const normalizedStatus = status?.toUpperCase();
 
   switch (normalizedStatus) {
@@ -23,9 +23,11 @@ const mapStatusToType = (status?: string | null): Type => {
     case "MOVIE":
       return Type.Movie;
     default:
-      return Type.Tv;
+      return undefined;
   }
 };
+
+const withTypeFallback = (type?: Type) => type ?? Type.Tv;
 
 const mapAnimeList = (animes: BackendAnime[]) =>
   animes.map((anime) => ({
@@ -34,7 +36,7 @@ const mapAnimeList = (animes: BackendAnime[]) =>
     jname: anime.title_original || anime.title,
     poster: PLACEHOLDER_POSTER,
     episodes: { sub: null, dub: null },
-    type: mapStatusToType(anime.status),
+    type: withTypeFallback(mapStatusToType(anime.status)),
     rank: undefined,
     duration: "",
     rating: null,
@@ -71,8 +73,18 @@ const getHomePageData: QueryFunction<IAnimeData, [string]> = async () => {
       poster: anime.poster,
       jname: anime.jname,
       episodes: anime.episodes,
-      type: anime.type,
+      type: withTypeFallback(anime.type),
       otherInfo: [],
+    }));
+    const topUpcomingAnimes: TopUpcomingAnime[] = mapped.map((anime) => ({
+      id: anime.id,
+      name: anime.name,
+      jname: anime.jname,
+      poster: anime.poster,
+      duration: anime.duration || "",
+      type: withTypeFallback(anime.type),
+      rating: anime.rating,
+      episodes: anime.episodes,
     }));
 
     const data: IAnimeData = {
@@ -80,7 +92,7 @@ const getHomePageData: QueryFunction<IAnimeData, [string]> = async () => {
       spotlightAnimes,
       trendingAnimes: mapped,
       latestEpisodeAnimes: mapped,
-      topUpcomingAnimes: mapped,
+      topUpcomingAnimes,
       top10Animes: {
         today: mapped.slice(0, 10),
         week: mapped.slice(0, 10),
