@@ -20,12 +20,27 @@ class TokenInvalidError(Exception):
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+def _normalize_password(password: str) -> str:
+    """Normalize passwords to avoid bcrypt's 72-byte input limit."""
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    normalized_password = _normalize_password(password)
+    return pwd_context.hash(normalized_password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    normalized_password = _normalize_password(plain_password)
+    try:
+        if pwd_context.verify(normalized_password, hashed_password):
+            return True
+    except ValueError:
+        pass
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except ValueError:
+        return False
 
 
 def create_access_token(payload: dict[str, Any]) -> str:
