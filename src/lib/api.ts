@@ -105,31 +105,36 @@ const markAuthFailureHandled = (error: unknown) => {
   }
 };
 
-let onAuthFailureNavigate: (() => void) | null = null;
+const authFailureHandlers = new Set<() => void>();
 
 export const setAuthFailureHandler = (handler: () => void) => {
-  onAuthFailureNavigate = handler;
+  authFailureHandlers.add(handler);
   return () => {
-    if (onAuthFailureNavigate === handler) {
-      onAuthFailureNavigate = null;
-    }
+    authFailureHandlers.delete(handler);
   };
 };
 
 const isAuthFailureHandled = (error: unknown) =>
   !!(error && typeof error === "object" && handledAuthFailures.has(error as object));
 
+const trackAuthFailureError = (error: unknown) => {
+  if (error && typeof error === "object") {
+    handledAuthFailures.add(error as object);
+  }
+};
+
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
-  if (onAuthFailureNavigate) {
-    onAuthFailureNavigate();
+  if (authFailureHandlers.size > 0) {
+    authFailureHandlers.forEach((handler) => handler());
     return;
   }
-  if (Router?.replace) {
+  const isAtHome = typeof window !== "undefined" && window.location.pathname === ROUTES.HOME;
+  if (!isAtHome && Router?.replace) {
     Router.replace(ROUTES.HOME);
     return;
   }
-  if (typeof window !== "undefined" && window.location.pathname !== ROUTES.HOME) {
+  if (typeof window !== "undefined" && !isAtHome) {
     window.location.assign(ROUTES.HOME);
   }
 };
@@ -213,6 +218,7 @@ api.interceptors.response.use(
       }
     }
 
+    trackAuthFailureError(error);
     const normalizedError = normalizeApiError(error);
     if (normalizedError.status === 401 && !isAuthFailureHandled(error)) {
       handleAuthFailure();
