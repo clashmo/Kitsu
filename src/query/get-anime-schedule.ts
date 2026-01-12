@@ -15,10 +15,14 @@ const getAnimeSchedule = async (date: string) => {
   }
 };
 
-export const useGetAnimeSchedule = (date: string) => {
+export const useGetAnimeSchedule = (
+  date: string,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryFn: () => getAnimeSchedule(date),
     queryKey: [GET_ANIME_SCHEDULE, date],
     retry: false,
+    enabled: options?.enabled ?? true,
   });
 };

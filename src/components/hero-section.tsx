@@ -18,6 +18,7 @@ import { ROUTES } from "@/constants/routes";
 import { ButtonLink } from "./common/button-link";
 import { SpotlightAnime } from "@/types/anime";
 import { Badge } from "./ui/badge";
+import { HERO_SPOTLIGHT_FALLBACK } from "@/constants/fallbacks";
 
 type IHeroSectionProps = {
   spotlightAnime: SpotlightAnime[];
@@ -27,16 +28,16 @@ type IHeroSectionProps = {
 const HeroSection = (props: IHeroSectionProps) => {
   const [api, setApi] = React.useState<CarouselApi>();
 
-  if (props.isDataLoading) return <LoadingSkeleton />;
-  if (!Array.isArray(props.spotlightAnime) || props.spotlightAnime.length === 0) {
-    return <LoadingSkeleton />;
-  }
+  const hasSpotlight = Array.isArray(props.spotlightAnime) && props.spotlightAnime.length > 0;
+  const shouldUseFallback = props.isDataLoading || !hasSpotlight;
+  const spotlightList = shouldUseFallback ? HERO_SPOTLIGHT_FALLBACK : props.spotlightAnime;
+  if (!spotlightList.length) return <LoadingSkeleton />;
 
   return (
     <div className="h-[80vh] w-full relative">
       <Carousel className="w-full" setApi={setApi} opts={{}}>
         <CarouselContent className="">
-          {props.spotlightAnime.map((anime, index) => (
+          {spotlightList.map((anime, index) => (
             <CarouselItem key={index}>
               <HeroCarouselItem anime={anime} />
             </CarouselItem>

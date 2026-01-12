@@ -20,6 +20,7 @@ interface WatchedAnime extends IAnime {
 
 const ContinueWatching = (props: Props) => {
   const [anime, setAnime] = useState<WatchedAnime[] | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   const { auth } = useAuthStore();
 
@@ -33,6 +34,7 @@ const ContinueWatching = (props: Props) => {
 
     if (!Array.isArray(watchedAnimes)) {
       removeLocalStorageItem("watched");
+      setHydrated(true);
       return;
     }
 
@@ -43,9 +45,15 @@ const ContinueWatching = (props: Props) => {
       episode: ani.episodes[ani.episodes.length - 1],
     }));
     setAnime(animes as WatchedAnime[]);
+    setHydrated(true);
   }, [auth]);
 
-  if (props.loading) return <LoadingSkeleton />;
+  const shouldShowLoadingWhenNoData =
+    props.loading && (!anime || !anime.length);
+
+  // Show skeleton until client state hydrates to avoid empty flashing on cold start
+  if (!hydrated) return <LoadingSkeleton />;
+  if (shouldShowLoadingWhenNoData) return <LoadingSkeleton />;
 
   if ((!anime || !anime.length) && !props.loading) return <></>;
 

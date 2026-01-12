@@ -1,3 +1,5 @@
+"use client";
+
 import Container from "./container";
 import React, { useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -32,7 +34,18 @@ function AnimeSchedule() {
     return date.toLocaleDateString("en-US");
   }, [currentSelectedTab, getDateForWeekday]);
 
-  const { isLoading, data } = useGetAnimeSchedule(selectedDate);
+  const [shouldLoadSchedule, setShouldLoadSchedule] =
+    React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = window.requestAnimationFrame(() => setShouldLoadSchedule(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
+
+  const { isLoading, data } = useGetAnimeSchedule(selectedDate, {
+    enabled: shouldLoadSchedule,
+  });
 
   function getDateForWeekday(targetDay: string) {
     const targetIndex = daysOfWeek.indexOf(targetDay);
@@ -64,7 +77,7 @@ function AnimeSchedule() {
           ))}
         </TabsList>
 
-        {isLoading || !Array.isArray(data?.scheduledAnimes) ? (
+        {!shouldLoadSchedule || isLoading || !Array.isArray(data?.scheduledAnimes) ? (
           <LoadingSkeleton />
         ) : (
           daysOfWeek.map((day) => (
