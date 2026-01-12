@@ -1,5 +1,4 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import Router from "next/router";
 import { env } from "next-runtime-env";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
@@ -119,10 +118,6 @@ const trackAuthFailureError = (error: unknown) => {
 
 const navigateHome = () => {
   if (typeof window === "undefined" || window.location.pathname === ROUTES.HOME) {
-    return;
-  }
-  if (Router?.replace) {
-    Router.replace(ROUTES.HOME);
     return;
   }
   window.location.assign(ROUTES.HOME);
