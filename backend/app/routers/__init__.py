@@ -1,4 +1,15 @@
-from . import anime, auth, collections, episodes, favorites, releases, search, users, views
+from . import (
+    anime,
+    auth,
+    collections,
+    episodes,
+    favorites,
+    releases,
+    search,
+    users,
+    views,
+    watch,
+)
 
 __all__ = [
     "auth",
@@ -10,5 +21,5 @@ __all__ = [
     "favorites",
     "views",
     "search",
+    "watch",
 ]
-

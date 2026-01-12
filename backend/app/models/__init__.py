@@ -6,6 +6,7 @@ from .favorite import Favorite
 from .release import Release
 from .user import User
 from .view import View
+from .watch_progress import WatchProgress
 
 __all__ = [
     "Base",
@@ -16,4 +17,5 @@ __all__ = [
     "Collection",
     "Favorite",
     "View",
+    "WatchProgress",
 ]
