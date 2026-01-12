@@ -18,7 +18,7 @@ import { Heart } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useGetAnimeDetails } from "@/query/get-anime-details";
 import Loading from "@/app/loading";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import { toast } from "sonner";
 import { useGetAnimeBanner } from "@/query/get-banner-anime";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import { api } from "@/lib/api";
 const Page = () => {
   const { slug } = useParams();
   const { data: anime, isLoading } = useGetAnimeDetails(slug as string);
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);

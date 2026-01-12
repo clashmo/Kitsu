@@ -16,7 +16,7 @@ import { MenuIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import NavbarAvatar from "./navbar-avatar";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -38,23 +38,30 @@ const menuItems: Array<{ title: string; href?: string }> = [
 ];
 
 const NavBar = () => {
-  const auth = useAuthStore();
+  const { auth, setAuth, clearAuth, setIsRefreshing } = useAuthSelector(
+    (state) => ({
+      auth: state.auth,
+      setAuth: state.setAuth,
+      clearAuth: state.clearAuth,
+      setIsRefreshing: state.setIsRefreshing,
+    }),
+  );
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
 
   useEffect(() => {
     const refreshAuth = async () => {
-      if (!auth.auth?.refreshToken) return;
-      auth.setIsRefreshing(true);
+      if (!auth?.refreshToken) return;
+      setIsRefreshing(true);
       try {
         const { data } = await api.post("/auth/refresh", {
-          refresh_token: auth.auth.refreshToken,
+          refresh_token: auth.refreshToken,
         });
 
         const profile = await api.get("/users/me");
 
-        auth.setAuth({
+        setAuth({
           id: (profile.data as any)?.id,
           email: (profile.data as any)?.email,
           username: (profile.data as any)?.email?.split("@")[0],
@@ -74,16 +81,16 @@ const NavBar = () => {
         });
       } catch (e) {
         console.error("Auth refresh error:", e);
-        auth.clearAuth();
+        clearAuth();
         toast.error("Login session expired.", {
           style: { background: "red" },
         });
       } finally {
-        auth.setIsRefreshing(false);
+        setIsRefreshing(false);
       }
     };
     refreshAuth();
-  }, [auth.auth?.refreshToken]);
+  }, [auth?.refreshToken, setAuth, setIsRefreshing, clearAuth]);
 
   return (
     <div
@@ -127,11 +134,19 @@ const NavBar = () => {
         </div>
         <div className="w-1/3 hidden lg:flex items-center gap-5">
           <SearchBar />
-          {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
+          {auth ? (
+            <NavbarAvatar auth={auth} clearAuth={clearAuth} />
+          ) : (
+            <LoginPopoverButton />
+          )}
         </div>
         <div className="lg:hidden flex items-center gap-5">
           <MobileMenuSheet trigger={<MenuIcon suppressHydrationWarning />} />
-          {auth.auth ? <NavbarAvatar auth={auth} /> : <LoginPopoverButton />}
+          {auth ? (
+            <NavbarAvatar auth={auth} clearAuth={clearAuth} />
+          ) : (
+            <LoginPopoverButton />
+          )}
         </div>
       </Container>
     </div>

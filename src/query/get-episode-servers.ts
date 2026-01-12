@@ -1,4 +1,4 @@
-import { GET_EPISODE_SERVERS } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import axios from "axios";
 import { IEpisodeServers } from "@/types/episodes";
 import { useQuery } from "react-query";
@@ -31,8 +31,9 @@ const getEpisodeServers = async (episodeId: string) => {
 export const useGetEpisodeServers = (episodeId: string) => {
   return useQuery({
     queryFn: () => getEpisodeServers(episodeId),
-    queryKey: [GET_EPISODE_SERVERS, episodeId],
+    queryKey: queryKeys.episodeServers(episodeId),
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 3,
     enabled: Boolean(episodeId),
     retry: false,
   });

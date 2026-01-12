@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { useGetAllEpisodes } from "@/query/get-all-episodes";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 
 type Props = {
   children: ReactNode;
@@ -29,7 +29,7 @@ const Layout = (props: Props) => {
   const searchParams = useSearchParams();
   const { setAnime, setSelectedEpisode } = useAnimeStore();
   const router = useRouter();
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
 
   const currentAnimeId = useMemo(
     () => searchParams.get("anime"),

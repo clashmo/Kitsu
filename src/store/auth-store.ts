@@ -43,3 +43,6 @@ export const useAuthStore = create<IAuthStore>()(
 export const useAuthHydrated = () => {
   return useAuthStore.persist.hasHydrated();
 };
+
+export const useAuthSelector = <T>(selector: (state: IAuthStore) => T) =>
+  useAuthStore(selector);

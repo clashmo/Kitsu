@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -44,7 +44,7 @@ function useBookMarks({
   per_page,
   populate = true,
 }: Props) {
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
   const progressKey = "watch-progress";
   const [bookmarks, setBookmarks] = useState<Bookmark[] | null>(null);
   const [totalPages, setTotalPages] = useState<number>(0);

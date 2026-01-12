@@ -1,4 +1,4 @@
-import { SEARCH_ANIME } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import { api } from "@/lib/api";
 import { ISuggestionAnime } from "@/types/anime";
 import { useQuery } from "react-query";
@@ -36,8 +36,10 @@ const searchAnime = async (q: string) => {
 export const useSearchAnime = (query: string) => {
   return useQuery({
     queryFn: () => searchAnime(query),
-    queryKey: [SEARCH_ANIME, query],
+    queryKey: queryKeys.searchAnime(query.trim(), 1),
     enabled: query.trim().length >= 2,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 };

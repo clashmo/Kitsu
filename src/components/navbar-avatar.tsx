@@ -1,26 +1,27 @@
 import React from "react";
 import Avatar from "./common/avatar";
-import { IAuthStore } from "@/store/auth-store";
+import { IAuth } from "@/store/auth-store";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Link from "next/link";
 import { User, LogOut } from "lucide-react";
 import { api } from "@/lib/api";
 
 type Props = {
-  auth: IAuthStore;
+  auth: IAuth | null;
+  clearAuth: () => void;
 };
 
-function NavbarAvatar({ auth }: Props) {
+function NavbarAvatar({ auth, clearAuth }: Props) {
   const [open, setOpen] = React.useState(false);
-  const profileSlug = auth.auth?.username || auth.auth?.email || "me";
+  const profileSlug = auth?.username || auth?.email || "me";
 
   return (
-    auth.auth && (
+    auth && (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger>
           <Avatar
-            username={auth.auth.username || auth.auth.email}
-            url={auth.auth.avatar}
+            username={auth.username || auth.email}
+            url={auth.avatar}
           />
         </PopoverTrigger>
         <PopoverContent className="bg-black bg-opacity-50 backdrop-blur-sm w-[200px] mt-4 mr-4 text-sm flex flex-col space-y-2">
@@ -28,7 +29,7 @@ function NavbarAvatar({ auth }: Props) {
             <p>
               Hello,{" "}
               <span className="text-red-500">
-                @{auth.auth.username || auth.auth.email}
+                @{auth.username || auth.email}
               </span>
             </p>
           </div>
@@ -46,14 +47,14 @@ function NavbarAvatar({ auth }: Props) {
           <div
             className="flex flex-row space-x-2 items-center cursor-pointer "
             onClick={() => {
-              if (auth.auth?.refreshToken) {
+              if (auth?.refreshToken) {
                 api
                   .post("/auth/logout", {
-                    refresh_token: auth.auth.refreshToken,
+                    refresh_token: auth.refreshToken,
                   })
                   .catch(() => {});
               }
-              auth.clearAuth();
+              clearAuth();
             }}
           >
             <LogOut size="20" />

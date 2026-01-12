@@ -1,4 +1,4 @@
-import { GET_ANIME_BANNER } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import { api } from "@/lib/api";
 import { useQuery } from "react-query";
 
@@ -38,8 +38,10 @@ const getAnimeBanner = async (anilistID: number) => {
 export const useGetAnimeBanner = (anilistID: number) => {
   return useQuery({
     queryFn: () => getAnimeBanner(anilistID),
-    queryKey: [GET_ANIME_BANNER, anilistID],
+    queryKey: queryKeys.animeBanner(anilistID),
     enabled: !!anilistID,
+    staleTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 };
