@@ -11,6 +11,7 @@ POSTGRES_BACKEND = "postgresql"
 ALEMBIC_VERSION_TABLE = "alembic_version"
 ALEMBIC_VERSION_COLUMN = "version_num"
 ALEMBIC_VERSION = table(ALEMBIC_VERSION_TABLE, column(ALEMBIC_VERSION_COLUMN))
+USERS_TABLE = table("users")
 
 
 @dataclass
@@ -30,7 +31,7 @@ async def check_database_connection(
     """
     async with engine.connect() as connection:
         await connection.execute(text("SELECT 1"))
-        await connection.execute(text("SELECT 1 FROM users LIMIT 1"))
+        await connection.execute(select(1).select_from(USERS_TABLE).limit(1))
 
         database = schema = revision = None
         metadata_available = include_metadata and engine.url.get_backend_name() == POSTGRES_BACKEND

@@ -201,7 +201,7 @@ async def handle_integrity_error(request: Request, exc: IntegrityError) -> JSONR
 
 @app.exception_handler(ProgrammingError)
 async def handle_programming_error(request: Request, exc: ProgrammingError) -> JSONResponse:
-    message = "Database not initialized"
+    message = "Database not initialized. Ensure migrations are applied."
     _log_error(request, status.HTTP_500_INTERNAL_SERVER_ERROR, InternalError.code, message, exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
