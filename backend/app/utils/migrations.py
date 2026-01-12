@@ -9,6 +9,7 @@ DEFAULT_TIMEOUT_SECONDS = 60
 try:
     MIGRATIONS_TIMEOUT = int(os.getenv("ALEMBIC_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS))
 except ValueError:
+    logger.warning("ALEMBIC_TIMEOUT_SECONDS is invalid; using default %s", DEFAULT_TIMEOUT_SECONDS)
     MIGRATIONS_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 
 
@@ -31,7 +32,7 @@ def run_migrations() -> None:
 
     alembic_executable = os.getenv("ALEMBIC_BIN") or shutil.which("alembic")
     if not alembic_executable:
-        logger.error("Alembic executable not found in PATH")
+        logger.error("Alembic executable not found via ALEMBIC_BIN or PATH")
         raise RuntimeError("Alembic executable not found")
 
     try:
