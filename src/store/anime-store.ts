@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { createStoreFactory } from './store-factory'
-import { IAnimeDetails } from '@/types/anime-details'
+import { create } from "zustand"
+import { createStoreFactory } from "./store-factory"
+import { IAnimeDetails } from "@/types/anime-details"
 
 interface IAnimeStore {
     anime: IAnimeDetails,

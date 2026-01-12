@@ -1,5 +1,3 @@
-"use client";
-
 import type { StoreApi, UseBoundStore } from "zustand";
 
 type Selector<TState, TSlice> = (state: TState) => TSlice;
