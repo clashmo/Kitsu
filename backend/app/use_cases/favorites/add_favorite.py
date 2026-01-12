@@ -1,9 +1,10 @@
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from ...crud.anime import get_anime_by_id
-from ...crud.favorite import add_favorite as crud_add_favorite, get_favorite
+from ...crud.favorite import add_favorite as crud_add_favorite
 from ...errors import AppError, ConflictError, NotFoundError
 from ...models.favorite import Favorite
 
@@ -16,14 +17,13 @@ async def add_favorite(
         if anime is None:
             raise NotFoundError("Anime not found")
 
-        existing = await get_favorite(session, user_id, anime_id)
-        if existing:
-            raise ConflictError("Favorite already exists")
-
         favorite = await crud_add_favorite(session, user_id, anime_id)
         await session.commit()
         await session.refresh(favorite)
         return favorite
+    except IntegrityError:
+        await session.rollback()
+        raise ConflictError("Favorite already exists") from None
     except AppError:
         await session.rollback()
         raise

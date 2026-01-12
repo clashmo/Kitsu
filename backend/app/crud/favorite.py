@@ -27,11 +27,14 @@ async def add_favorite(
 
 async def remove_favorite(
     session: AsyncSession, user_id: uuid.UUID, anime_id: uuid.UUID
-) -> None:
+) -> bool:
     favorite = await get_favorite(session, user_id, anime_id)
-    if favorite is not None:
-        session.delete(favorite)
-        await session.flush()
+    if favorite is None:
+        return False
+
+    session.delete(favorite)
+    await session.flush()
+    return True
 
 
 async def list_favorites(

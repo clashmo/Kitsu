@@ -24,11 +24,13 @@ async def update_progress(
         if episode <= 0:
             raise ValidationError("Episode number must be positive")
         if position_seconds is None and progress_percent is None:
-            raise ValidationError("Progress value is required")
+            raise ValidationError(
+                "Either position_seconds or progress_percent must be provided"
+            )
         if progress_percent is not None and not (0 <= progress_percent <= 100):
             raise ValidationError("Progress percent must be between 0 and 100")
         if position_seconds is not None and position_seconds < 0:
-            raise ValidationError("Progress timestamp must be non-negative")
+            raise ValidationError("Position in seconds must be non-negative")
 
         anime = await get_anime_by_id(session, anime_id)
         if anime is None:
