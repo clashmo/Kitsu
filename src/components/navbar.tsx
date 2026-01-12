@@ -16,7 +16,7 @@ import { MenuIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
-import { useAuthSelector, useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import NavbarAvatar from "./navbar-avatar";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -39,7 +39,9 @@ const menuItems: Array<{ title: string; href?: string }> = [
 
 const NavBar = () => {
   const auth = useAuthSelector((state) => state.auth);
-  const { setAuth, clearAuth, setIsRefreshing } = useAuthStore.getState();
+  const setAuth = useAuthSelector((state) => state.setAuth);
+  const clearAuth = useAuthSelector((state) => state.clearAuth);
+  const setIsRefreshing = useAuthSelector((state) => state.setIsRefreshing);
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
