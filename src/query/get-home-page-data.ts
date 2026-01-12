@@ -1,4 +1,4 @@
-import { GET_HOME_PAGE_DATA } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import { api } from "@/lib/api";
 import { IAnimeData, SpotlightAnime, TopUpcomingAnime, Type } from "@/types/anime";
 import { QueryFunction, UseQueryOptions, useQuery } from "react-query";
@@ -42,7 +42,10 @@ const mapAnimeList = (animes: BackendAnime[]) =>
     rating: null,
   }));
 
-const getHomePageData: QueryFunction<IAnimeData, [string]> = async () => {
+const getHomePageData: QueryFunction<
+  IAnimeData,
+  ReturnType<typeof queryKeys.homePage>
+> = async () => {
   const emptyData: IAnimeData = {
     spotlightAnimes: [],
     trendingAnimes: [],
@@ -112,11 +115,16 @@ const getHomePageData: QueryFunction<IAnimeData, [string]> = async () => {
 };
 
 export const useGetHomePageData = (
-  options?: UseQueryOptions<IAnimeData, Error, IAnimeData, [string]>,
+  options?: UseQueryOptions<
+    IAnimeData,
+    Error,
+    IAnimeData,
+    ReturnType<typeof queryKeys.homePage>
+  >,
 ) => {
-  return useQuery<IAnimeData, Error, IAnimeData, [string]>({
+  return useQuery<IAnimeData, Error, IAnimeData, ReturnType<typeof queryKeys.homePage>>({
     queryFn: getHomePageData,
-    queryKey: [GET_HOME_PAGE_DATA],
+    queryKey: queryKeys.homePage(),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     cacheTime: 1000 * 60 * 10, // 10 minutes

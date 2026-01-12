@@ -1,4 +1,4 @@
-import { GET_ANIME_SCHEDULE } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import axios from "axios";
 import { IAnimeSchedule } from "@/types/anime-schedule";
 import { useQuery } from "react-query";
@@ -21,8 +21,10 @@ export const useGetAnimeSchedule = (
 ) => {
   return useQuery({
     queryFn: () => getAnimeSchedule(date),
-    queryKey: [GET_ANIME_SCHEDULE, date],
+    queryKey: queryKeys.animeSchedule(date),
     retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
     enabled: options?.enabled ?? true,
   });
 };

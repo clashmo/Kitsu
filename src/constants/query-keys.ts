@@ -1,12 +1,17 @@
-export const GET_TRENDING_ANIME = "get-trending-anime";
-export const GET_RECENT_ANIME = "get-recent-anime";
-export const GET_POPULAR_ANIME = "get-popular-anime";
-export const GET_ANIME_DETAILS = "get-anime-details";
-export const GET_EPISODE_DATA = "get-episode-data";
-export const GET_ALL_EPISODES = "get-all-episodes";
-export const SEARCH_ANIME = "search-anime";
-export const GET_EPISODE_SERVERS = "get-episode-servers";
-export const GET_ANIME_BANNER = "get-anime-banner";
-export const GET_ANIME_SCHEDULE = "get-anime-schedule";
-
-export const GET_HOME_PAGE_DATA = "get-home-page-data";
+export const queryKeys = {
+  trendingAnime: () => ["get-trending-anime"] as const,
+  recentAnime: () => ["get-recent-anime"] as const,
+  popularAnime: () => ["get-popular-anime"] as const,
+  animeDetails: (animeId: string) => ["get-anime-details", animeId] as const,
+  episodeData: (episodeId: string, server: string | undefined, subOrDub: string) =>
+    ["get-episode-data", episodeId, server ?? "", subOrDub] as const,
+  allEpisodes: (animeId: string) => ["get-all-episodes", animeId] as const,
+  searchAnime: (query: string, page: number = 1) =>
+    ["search-anime", query, page] as const,
+  searchAnimeSuggestions: (query: string) =>
+    ["search-anime-suggestions", query] as const,
+  episodeServers: (episodeId: string) => ["get-episode-servers", episodeId] as const,
+  animeBanner: (anilistId: number) => ["get-anime-banner", anilistId] as const,
+  animeSchedule: (date: string) => ["get-anime-schedule", date] as const,
+  homePage: () => ["get-home-page-data"] as const,
+} as const;

@@ -1,8 +1,9 @@
-import { SEARCH_ANIME } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import { api } from "@/lib/api";
 import { IAnimeSearch, SearchAnimeParams } from "@/types/anime";
 import { useQuery } from "react-query";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
+import { normalizeSearchParams } from "./search-normalize";
 
 type BackendAnime = {
   id: string;
@@ -57,10 +58,14 @@ const searchAnime = async (params: SearchAnimeParams) => {
 };
 
 export const useGetSearchAnimeResults = (params: SearchAnimeParams) => {
+  const normalizedParams: SearchAnimeParams = normalizeSearchParams(params);
+
   return useQuery({
-    queryFn: () => searchAnime(params),
-    queryKey: [SEARCH_ANIME, { ...params }],
-    enabled: (params.q || "").trim().length >= 2,
+    queryFn: () => searchAnime(normalizedParams),
+    queryKey: queryKeys.searchAnime(normalizedParams.q, normalizedParams.page),
+    enabled: (normalizedParams.q ?? "").length >= 2,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 };

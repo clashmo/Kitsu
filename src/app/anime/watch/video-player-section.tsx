@@ -11,7 +11,7 @@ import { getFallbackServer } from "@/utils/fallback-server";
 import { AlertCircleIcon } from "lucide-react";
 // import { Button } from "@/components/ui/button";
 // import { Switch } from "@/components/ui/switch";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSearchParams } from "next/navigation";
 import { getLocalStorageJSON, setLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
@@ -26,7 +26,7 @@ const VideoPlayerSection = () => {
   const [serverName, setServerName] = useState<string>("");
   const [key, setKey] = useState<string>("");
 
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
   // const [autoSkip, setAutoSkip] = useState<boolean>(
   //   auth?.autoSkip || Boolean(localStorage.getItem("autoSkip")) || false,
   // );

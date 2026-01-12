@@ -4,7 +4,7 @@ import Button from "./common/custom-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import { api } from "@/lib/api";
 
 type FormData = {
@@ -14,7 +14,7 @@ type FormData = {
 };
 
 function LoginPopoverButton() {
-  const auth = useAuthStore();
+  const setAuth = useAuthSelector((state) => state.setAuth);
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -57,7 +57,7 @@ function LoginPopoverButton() {
 
       toast.success("Login successful", { style: { background: "green" } });
       clearForm();
-      auth.setAuth({
+      setAuth({
         id: userId,
         email: userEmail,
         username: userEmail?.split("@")[0],
@@ -119,7 +119,7 @@ function LoginPopoverButton() {
         // ignore profile errors and fallback
       }
 
-      auth.setAuth({
+       setAuth({
         id: userId,
         email: userEmail,
         username: userEmail?.split("@")[0],

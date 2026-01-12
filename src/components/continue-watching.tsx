@@ -7,7 +7,7 @@ import { ROUTES } from "@/constants/routes";
 import BlurFade from "./ui/blur-fade";
 import { IAnime } from "@/types/anime";
 import { History } from "lucide-react";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import { getLocalStorageJSON, removeLocalStorageItem } from "@/utils/storage";
 
 type Props = {
@@ -22,7 +22,7 @@ const ContinueWatching = (props: Props) => {
   const [anime, setAnime] = useState<WatchedAnime[] | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

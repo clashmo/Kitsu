@@ -1,4 +1,4 @@
-import { GET_EPISODE_DATA } from "@/constants/query-keys";
+import { queryKeys } from "@/constants/query-keys";
 import axios from "axios";
 import { IEpisodeSource } from "@/types/episodes";
 import { useQuery } from "react-query";
@@ -43,8 +43,9 @@ export const useGetEpisodeData = (
 ) => {
   return useQuery({
     queryFn: () => getEpisodeData(episodeId, server, subOrDub),
-    queryKey: [GET_EPISODE_DATA, episodeId, server, subOrDub],
+    queryKey: queryKeys.episodeData(episodeId, server, subOrDub),
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 3,
     enabled: Boolean(episodeId) && server !== "",
     retry: false,
   });

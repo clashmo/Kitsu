@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import Container from "@/components/container";
 import Avatar from "@/components/common/avatar";
-import { useAuthHydrated, useAuthStore } from "@/store/auth-store";
+import { useAuthHydrated, useAuthSelector } from "@/store/auth-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -13,7 +13,7 @@ import Loading from "@/app/loading";
 import AnilistImport from "./components/anilist-import";
 
 function ProfilePage() {
-  const { auth } = useAuthStore();
+  const auth = useAuthSelector((state) => state.auth);
   const router = useRouter();
   const hasHydrated = useAuthHydrated();
 
