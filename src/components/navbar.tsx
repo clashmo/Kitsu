@@ -16,11 +16,10 @@ import { MenuIcon, X } from "lucide-react";
 import useScrollPosition from "@/hooks/use-scroll-position";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "./ui/sheet";
 import LoginPopoverButton from "./login-popover-button";
-import { useAuthStore } from "@/store/auth-store";
+import { useAuthSelector } from "@/store/auth-store";
 import NavbarAvatar from "./navbar-avatar";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { useShallow } from "zustand/react/shallow";
 
 const menuItems: Array<{ title: string; href?: string }> = [
   // {
@@ -39,14 +38,10 @@ const menuItems: Array<{ title: string; href?: string }> = [
 ];
 
 const NavBar = () => {
-  const { auth, setAuth, clearAuth, setIsRefreshing } = useAuthStore(
-    useShallow((state) => ({
-      auth: state.auth,
-      setAuth: state.setAuth,
-      clearAuth: state.clearAuth,
-      setIsRefreshing: state.setIsRefreshing,
-    })),
-  );
+  const auth = useAuthSelector((state) => state.auth);
+  const setAuth = useAuthSelector((state) => state.setAuth);
+  const clearAuth = useAuthSelector((state) => state.clearAuth);
+  const setIsRefreshing = useAuthSelector((state) => state.setIsRefreshing);
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;
@@ -91,7 +86,7 @@ const NavBar = () => {
       }
     };
     refreshAuth();
-  }, [auth?.refreshToken]);
+  }, [auth?.refreshToken, setAuth, clearAuth, setIsRefreshing]);
 
   return (
     <div
