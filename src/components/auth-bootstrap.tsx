@@ -15,7 +15,6 @@ type ProfileResponse = {
 
 const AuthBootstrap = () => {
   const auth = useAuthSelector((state) => state.auth);
-  const setAuth = useAuthSelector((state) => state.setAuth);
   const clearAuth = useAuthSelector((state) => state.clearAuth);
   const setIsAuthReady = useAuthSelector((state) => state.setIsAuthReady);
   const hydrated = useAuthHydrated();
@@ -39,17 +38,21 @@ const AuthBootstrap = () => {
         // Refresh must complete before fetching the profile to avoid unauthorized responses.
         const profile = await api.get<ProfileResponse>("/users/me");
         if (cancelled) return;
-        const currentAuth = useAuthStore.getState().auth;
-        if (currentAuth) {
-          setAuth({
-            ...currentAuth,
-            id: profile.data?.id,
-            email: profile.data?.email,
-            username: profile.data?.email?.split("@")[0],
-            accessToken: newToken || currentAuth.accessToken,
-            refreshToken: currentAuth.refreshToken,
-          });
-        }
+        useAuthStore.setState((state) => {
+          if (!state.auth) return state;
+          const email = profile.data?.email ?? state.auth.email;
+          const username = email ? email.split("@")[0] : state.auth.username;
+          return {
+            auth: {
+              ...state.auth,
+              id: profile.data?.id ?? state.auth.id,
+              email,
+              username,
+              accessToken: newToken || state.auth.accessToken,
+              refreshToken: state.auth.refreshToken,
+            },
+          };
+        });
       } catch (error) {
         if (!cancelled) {
           // eslint-disable-next-line no-console

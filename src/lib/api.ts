@@ -25,6 +25,7 @@ type TokenPayload = {
   refresh_token?: string;
   refreshToken?: string;
 };
+type RefreshError = Error & { code?: "invalid_token" };
 
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
@@ -92,7 +93,9 @@ const performRefresh = async (refreshToken: string, attempt = 0): Promise<string
     updateTokensFromRefresh(tokens);
     const newToken = resolveAccessToken(tokens);
     if (!newToken) {
-      throw new Error("No token returned from refresh");
+      const tokenError = new Error("No token returned from refresh") as RefreshError;
+      tokenError.code = "invalid_token";
+      throw tokenError;
     }
     return newToken;
   } catch (err) {
@@ -261,8 +264,8 @@ api.interceptors.response.use(
         trackAuthFailureError(err);
         const normalizedRefreshError = normalizeApiError(err);
         const status = normalizedRefreshError.status ?? (err instanceof AxiosError ? err.response?.status : undefined);
-        const isInvalidToken =
-          err instanceof Error && err.message.toLowerCase().includes("no token returned from refresh");
+        const refreshError = err as RefreshError;
+        const isInvalidToken = refreshError?.code === "invalid_token";
         const reason: AuthFailureReason =
           status === 401 ? "expired_session" : isInvalidToken ? "invalid_token" : "unauthenticated";
         handleAuthFailure(reason);
