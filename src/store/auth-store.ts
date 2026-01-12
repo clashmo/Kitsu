@@ -64,12 +64,12 @@ export const useAuthHydrated = () => {
       return;
     }
 
-    if (persist?.hasHydrated?.()) {
+    if (persist.hasHydrated?.()) {
       setHydrated(true);
       return;
     }
 
-    const unsub = persist?.onFinishHydration?.(() => {
+    const unsub = persist.onFinishHydration?.(() => {
       setHydrated(true);
     });
 
