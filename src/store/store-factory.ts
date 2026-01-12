@@ -6,10 +6,14 @@ import type { StoreApi, UseBoundStore } from "zustand";
 type Selector<TState, TSlice> = (state: TState) => TSlice;
 type EqualityChecker<TSlice> = (a: TSlice, b: TSlice) => boolean;
 
+type BoundStore<TState> = UseBoundStore<StoreApi<TState>> & {
+  persist?: unknown;
+};
+
 export const createStoreFactory = <TState extends object>(
-  initializer: () => UseBoundStore<StoreApi<TState>>,
+  initializer: () => BoundStore<TState>,
 ) => {
-  let clientStore: UseBoundStore<StoreApi<TState>> | null = null;
+  let clientStore: BoundStore<TState> | null = null;
 
   const getStore = () => {
     if (typeof window === "undefined") {
@@ -26,9 +30,12 @@ export const createStoreFactory = <TState extends object>(
   const useBoundStore = (<StateSlice>(
     selector?: Selector<TState, StateSlice>,
     equalityFn?: EqualityChecker<StateSlice>,
-  ) => useStore(getStore(), selector as any, equalityFn)) as UseBoundStore<
-    StoreApi<TState>
-  >;
+  ) => {
+    const store = getStore();
+    return selector
+      ? useStore(store, selector, equalityFn)
+      : useStore(store);
+  }) as BoundStore<TState>;
 
   Object.defineProperties(useBoundStore, {
     getState: {
@@ -44,10 +51,9 @@ export const createStoreFactory = <TState extends object>(
       get: () => getStore().destroy,
     },
     persist: {
-      get: () => (getStore() as unknown as { persist?: unknown }).persist,
+      get: () => getStore().persist,
     },
   });
 
   return { getStore, useBoundStore };
 };
-
