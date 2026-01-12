@@ -56,7 +56,7 @@ logger.setLevel(log_level)
 # Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
 logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
 
-from .routers import (  # noqa: E402
+from .routers import (  # Import after logging setup to suppress passlib warnings; noqa: E402
     anime,
     auth,
     collections,
