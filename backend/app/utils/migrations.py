@@ -4,7 +4,13 @@ import subprocess
 from pathlib import Path
 
 logger = logging.getLogger("kitsu.migrations")
+# utils/migrations.py -> app -> backend -> project root (alembic.ini lives here)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_TIMEOUT_SECONDS = 60
+try:
+    MIGRATIONS_TIMEOUT = int(os.getenv("ALEMBIC_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS))
+except ValueError:
+    MIGRATIONS_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 
 
 def run_migrations() -> None:
@@ -17,7 +23,7 @@ def run_migrations() -> None:
             text=True,
             env=os.environ.copy(),
             cwd=PROJECT_ROOT,
-            timeout=60,
+            timeout=MIGRATIONS_TIMEOUT,
         )
     except subprocess.TimeoutExpired as exc:
         logger.error("Alembic migrations timed out after %s seconds", exc.timeout)
