@@ -59,10 +59,15 @@ const searchAnime = async (params: SearchAnimeParams) => {
 export const useGetSearchAnimeResults = (params: SearchAnimeParams) => {
   const query = (params.q || "").trim();
   const page = params.page || 1;
+  const normalizedParams: SearchAnimeParams = {
+    ...params,
+    q: query,
+    page,
+  };
 
   return useQuery({
-    queryFn: () => searchAnime({ ...params, q: query, page }),
-    queryKey: queryKeys.searchAnime(query, page),
+    queryFn: () => searchAnime(normalizedParams),
+    queryKey: queryKeys.searchAnime(normalizedParams.q, normalizedParams.page),
     enabled: query.length >= 2,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,

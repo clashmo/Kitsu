@@ -38,14 +38,10 @@ const menuItems: Array<{ title: string; href?: string }> = [
 ];
 
 const NavBar = () => {
-  const { auth, setAuth, clearAuth, setIsRefreshing } = useAuthSelector(
-    (state) => ({
-      auth: state.auth,
-      setAuth: state.setAuth,
-      clearAuth: state.clearAuth,
-      setIsRefreshing: state.setIsRefreshing,
-    }),
-  );
+  const auth = useAuthSelector((state) => state.auth);
+  const setAuth = useAuthSelector((state) => state.setAuth);
+  const clearAuth = useAuthSelector((state) => state.clearAuth);
+  const setIsRefreshing = useAuthSelector((state) => state.setIsRefreshing);
   const { y } = useScrollPosition();
   const isHeaderFixed = true;
   const isHeaderSticky = y > 0;

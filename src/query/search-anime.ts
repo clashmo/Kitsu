@@ -34,10 +34,11 @@ const searchAnime = async (q: string) => {
 };
 
 export const useSearchAnime = (query: string) => {
+  const normalizedQuery = query.trim();
   return useQuery({
-    queryFn: () => searchAnime(query),
-    queryKey: queryKeys.searchAnime(query.trim(), 1),
-    enabled: query.trim().length >= 2,
+    queryFn: () => searchAnime(normalizedQuery),
+    queryKey: queryKeys.searchAnimeSuggestions(normalizedQuery),
+    enabled: normalizedQuery.length >= 2,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
     retry: false,

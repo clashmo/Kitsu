@@ -8,6 +8,8 @@ export const queryKeys = {
   allEpisodes: (animeId: string) => ["get-all-episodes", animeId] as const,
   searchAnime: (query: string, page: number = 1) =>
     ["search-anime", query, page] as const,
+  searchAnimeSuggestions: (query: string) =>
+    ["search-anime-suggestions", query] as const,
   episodeServers: (episodeId: string) => ["get-episode-servers", episodeId] as const,
   animeBanner: (anilistId: number) => ["get-anime-banner", anilistId] as const,
   animeSchedule: (date: string) => ["get-anime-schedule", date] as const,
