@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createStoreFactory } from "./store-factory";
 
 export type IAuth = {
   id?: string;
@@ -26,26 +27,30 @@ export interface IAuthStore {
   setIsAuthReady: (val: boolean) => void;
 }
 
-export const useAuthStore = create<IAuthStore>()(
-  persist(
-    (set) => ({
-      auth: null,
-      setAuth: (state: IAuth) => set({ auth: state }),
-      clearAuth: () => set({ auth: null }),
-      isRefreshing: false,
-      setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
-      isAuthReady: false,
-      setIsAuthReady: (val: boolean) => set({ isAuthReady: val }),
-    }),
-    {
-      name: "auth",
-      partialize: (state) => ({
-        auth: state.auth,
+const createAuthStore = () =>
+  create<IAuthStore>()(
+    persist(
+      (set) => ({
+        auth: null,
+        setAuth: (state: IAuth) => set({ auth: state }),
+        clearAuth: () => set({ auth: null }),
+        isRefreshing: false,
+        setIsRefreshing: (val: boolean) => set({ isRefreshing: val }),
+        isAuthReady: false,
+        setIsAuthReady: (val: boolean) => set({ isAuthReady: val }),
       }),
-      version: 0,
-    },
-  ),
-);
+      {
+        name: "auth",
+        partialize: (state) => ({
+          auth: state.auth,
+        }),
+        version: 0,
+      },
+    ),
+  );
+
+export const { useBoundStore: useAuthStore } =
+  createStoreFactory<IAuthStore>(createAuthStore);
 
 export const useAuthHydrated = () => {
   const [isClient, setIsClient] = useState(false);
