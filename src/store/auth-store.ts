@@ -49,41 +49,12 @@ export const useAuthStore = create<IAuthStore>()(
 
 export const useAuthHydrated = () => {
   const [isClient, setIsClient] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (!isClient || isHydrated) {
-      return;
-    }
-    const persist = useAuthStore.persist;
-
-    if (!persist) {
-      setIsHydrated(true);
-      return;
-    }
-
-    const hasHydrated = persist.hasHydrated?.() ?? false;
-    if (hasHydrated) {
-      setIsHydrated(true);
-      return;
-    }
-
-    const unsubFinish = persist.onFinishHydration
-      ? persist.onFinishHydration(() => {
-          setIsHydrated(true);
-        })
-      : undefined;
-
-    return () => {
-      unsubFinish?.();
-    };
-  }, [isClient, isHydrated]);
-
-  return isClient && isHydrated;
+  return isClient;
 };
 
 export const useAuthSelector = <T>(selector: (state: IAuthStore) => T) =>
