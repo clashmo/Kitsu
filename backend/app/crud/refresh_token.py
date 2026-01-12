@@ -38,10 +38,10 @@ async def revoke_refresh_token(
     stmt = select(RefreshToken).where(RefreshToken.user_id == user_id)
     if token_hash is not None:
         stmt = stmt.where(RefreshToken.token_hash == token_hash)
+    else:
+        stmt = stmt.order_by(RefreshToken.created_at.desc()).limit(1)
 
-    result = await session.execute(
-        stmt.order_by(RefreshToken.created_at.desc()).limit(1)
-    )
+    result = await session.execute(stmt)
     token = result.scalars().first()
     if token is None:
         return None
