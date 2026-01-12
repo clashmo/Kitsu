@@ -79,6 +79,11 @@ const updateTokensFromRefresh = (tokens: ReturnType<typeof extractTokens>) => {
   }
 };
 
+/**
+ * Refreshes the session tokens with a single retry on 401 responses.
+ * @param refreshToken active refresh token for the session
+ * @param attempt current retry attempt (0 = initial)
+ */
 const performRefresh = async (refreshToken: string, attempt = 0): Promise<string | null> => {
   try {
     const { data } = await authClient.post("/auth/refresh", {

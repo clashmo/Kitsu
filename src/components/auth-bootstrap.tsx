@@ -33,7 +33,7 @@ const AuthBootstrap = () => {
         const newToken = await refreshSession(auth.refreshToken);
         const profile = await api.get("/users/me");
         if (cancelled) return;
-        const currentAuth = useAuthStore.getState().auth || auth;
+        const currentAuth = useAuthStore.getState().auth;
         if (currentAuth) {
           setAuth({
             ...currentAuth,
@@ -41,9 +41,7 @@ const AuthBootstrap = () => {
             email: (profile.data as any)?.email,
             username: (profile.data as any)?.email?.split("@")[0],
             accessToken: newToken || currentAuth.accessToken,
-            refreshToken:
-              useAuthStore.getState().auth?.refreshToken ||
-              currentAuth.refreshToken,
+            refreshToken: currentAuth.refreshToken,
           });
         }
       } catch {
