@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -42,6 +43,7 @@ from .routers import (
     watch,
 )
 from .utils.health import check_database_connection
+from .utils.migrations import run_migrations
 
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
@@ -73,6 +75,13 @@ async def lifespan(app: FastAPI):
     logger.info("Starting application")
     if settings.debug:
         logger.warning("DEBUG=true — do not use in production")
+
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, run_migrations)
+    except RuntimeError as exc:
+        logger.exception("Application startup aborted due to migration failure")
+        raise
 
     try:
         db_status = await check_database_connection(engine, include_metadata=True)
