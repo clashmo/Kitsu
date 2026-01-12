@@ -48,16 +48,12 @@ export const useAuthStore = create<IAuthStore>()(
 );
 
 export const useAuthHydrated = () => {
-  const [isClient, setIsClient] = useState(
-    () => typeof window !== "undefined",
-  );
+  const [isClient, setIsClient] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    if (!isClient) {
-      setIsClient(true);
-    }
-  }, [isClient]);
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!isClient) {
