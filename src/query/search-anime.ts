@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { ISuggestionAnime } from "@/types/anime";
 import { useQuery } from "react-query";
 import { PLACEHOLDER_POSTER } from "@/utils/constants";
+import { normalizeSearchQuery } from "./search-normalize";
 
 const searchAnime = async (q: string) => {
   if (q === "") {
@@ -34,7 +35,7 @@ const searchAnime = async (q: string) => {
 };
 
 export const useSearchAnime = (query: string) => {
-  const normalizedQuery = query.trim();
+  const normalizedQuery = normalizeSearchQuery(query);
   return useQuery({
     queryFn: () => searchAnime(normalizedQuery),
     queryKey: queryKeys.searchAnimeSuggestions(normalizedQuery),

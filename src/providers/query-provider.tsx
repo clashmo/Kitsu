@@ -7,16 +7,20 @@ type Props = {
   children: ReactNode;
 };
 
+const DEFAULT_STALE_TIME = 1000 * 60 * 5;
+const DEFAULT_CACHE_TIME = 1000 * 60 * 10;
+const DEFAULT_RETRY_COUNT = 1;
+
 const QueryProvider = (props: Props) => {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60 * 5,
-            cacheTime: 1000 * 60 * 10,
+            staleTime: DEFAULT_STALE_TIME,
+            cacheTime: DEFAULT_CACHE_TIME,
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: DEFAULT_RETRY_COUNT,
           },
         },
       }),
