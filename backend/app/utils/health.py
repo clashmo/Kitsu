@@ -28,7 +28,8 @@ async def check_database_connection(
         await connection.execute(text("SELECT 1 FROM users LIMIT 1"))
 
         database = schema = revision = None
-        if include_metadata:
+        metadata_available = include_metadata and engine.url.get_backend_name() == "postgresql"
+        if metadata_available:
             try:
                 database = await connection.scalar(text("SELECT current_database()"))
                 schema = await connection.scalar(text("SELECT current_schema()"))
