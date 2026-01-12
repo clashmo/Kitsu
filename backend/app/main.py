@@ -53,8 +53,8 @@ if not logging.getLogger().handlers:
     )
 logger = logging.getLogger("kitsu")
 logger.setLevel(log_level)
-logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
 # Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
+logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
 
 from .routers import (  # noqa: E402
     anime,
