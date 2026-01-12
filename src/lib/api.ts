@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import Router from "next/router";
 import { env } from "next-runtime-env";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
@@ -108,12 +109,24 @@ let onAuthFailureNavigate: (() => void) | null = null;
 
 export const setAuthFailureHandler = (handler: () => void) => {
   onAuthFailureNavigate = handler;
+  return () => {
+    if (onAuthFailureNavigate === handler) {
+      onAuthFailureNavigate = null;
+    }
+  };
 };
+
+const isAuthFailureHandled = (error: unknown) =>
+  !!(error && typeof error === "object" && handledAuthFailures.has(error as object));
 
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
   if (onAuthFailureNavigate) {
     onAuthFailureNavigate();
+    return;
+  }
+  if (Router?.replace) {
+    Router.replace(ROUTES.HOME);
     return;
   }
   if (typeof window !== "undefined" && window.location.pathname !== ROUTES.HOME) {
@@ -201,10 +214,7 @@ api.interceptors.response.use(
     }
 
     const normalizedError = normalizeApiError(error);
-    if (
-      normalizedError.status === 401 &&
-      !(error && typeof error === "object" && handledAuthFailures.has(error as object))
-    ) {
+    if (normalizedError.status === 401 && !isAuthFailureHandled(error)) {
       handleAuthFailure();
     }
     return Promise.reject(normalizedError);
