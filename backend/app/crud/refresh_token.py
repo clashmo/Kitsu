@@ -10,17 +10,6 @@ from ..models.refresh_token import RefreshToken
 async def create_or_rotate_refresh_token(
     session: AsyncSession, user_id: uuid.UUID, token_hash: str, expires_at: datetime
 ) -> RefreshToken:
-    result = await session.execute(
-        select(RefreshToken).where(RefreshToken.user_id == user_id)
-    )
-    existing = result.scalars().first()
-    if existing:
-        existing.token_hash = token_hash
-        existing.expires_at = expires_at
-        existing.revoked = False
-        await session.flush()
-        return existing
-
     refresh_token = RefreshToken(
         user_id=user_id,
         token_hash=token_hash,
@@ -49,8 +38,11 @@ async def revoke_refresh_token(
     result = await session.execute(
         select(RefreshToken).where(RefreshToken.user_id == user_id)
     )
-    token = result.scalars().first()
-    if token:
+    tokens = result.scalars().all()
+    if not tokens:
+        return None
+
+    for token in tokens:
         token.revoked = True
-        await session.flush()
-    return token
+    await session.flush()
+    return tokens[-1]

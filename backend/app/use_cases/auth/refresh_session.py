@@ -21,7 +21,10 @@ async def refresh_session(session: AsyncSession, refresh_token: str) -> AuthToke
         if stored_token.expires_at <= datetime.now(timezone.utc):
             raise AuthError()
 
-        return await issue_tokens(session, stored_token.user_id)
+        user_id = stored_token.user_id
+        await session.delete(stored_token)
+        await session.flush()
+        return await issue_tokens(session, user_id)
     except AppError:
         await session.rollback()
         raise
