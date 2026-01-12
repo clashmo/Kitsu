@@ -33,11 +33,13 @@ async def create_or_rotate_refresh_token(
 
 
 async def get_refresh_token_by_hash(
-    session: AsyncSession, token_hash: str
+    session: AsyncSession, token_hash: str, *, for_update: bool = False
 ) -> RefreshToken | None:
-    result = await session.execute(
-        select(RefreshToken).where(RefreshToken.token_hash == token_hash)
-    )
+    stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+    if for_update:
+        stmt = stmt.with_for_update()
+
+    result = await session.execute(stmt)
     return result.scalars().first()
 
 
