@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { env } from "next-runtime-env";
+import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/store/auth-store";
 
 const baseURL =
@@ -62,6 +63,84 @@ const resolveAccessToken = (tokens: ReturnType<typeof extractTokens>) => {
     console.warn("Using existing access token because refresh returned none");
   }
   return tokens.accessToken || fallbackToken;
+};
+
+export type ApiError = {
+  code: string;
+  message: string;
+  status?: number;
+};
+
+const normalizeApiError = (error: unknown): ApiError => {
+  if (error instanceof AxiosError) {
+    const status = error.response?.status;
+    const payload = error.response?.data as { code?: string; message?: string } | undefined;
+    const baseMessage =
+      typeof payload?.message === "string"
+        ? payload.message
+        : error.message || "Request failed. Please try again.";
+    if (status === 401) {
+      return { code: payload?.code || "unauthorized", message: payload?.message || "Session expired. Please sign in again.", status };
+    }
+    if (status === 403) {
+      return { code: payload?.code || "forbidden", message: payload?.message || "Access denied.", status };
+    }
+    if (status && status >= 500) {
+      return { code: payload?.code || "server_error", message: payload?.message || "Something went wrong on our side. Please try again.", status };
+    }
+    if (error.code === "ECONNABORTED") {
+      return { code: "timeout", message: "Request timed out. Please retry.", status };
+    }
+    return { code: payload?.code || "request_failed", message: baseMessage, status };
+  }
+  return { code: "unknown_error", message: "Unexpected error occurred." };
+};
+
+// Tracks error objects that already triggered auth handling to avoid duplicate redirects
+const handledAuthFailures = new WeakSet<object>();
+
+const authFailureHandlers = new Set<(redirectTo: string) => void>();
+
+export const setAuthFailureHandler = (handler: (redirectTo: string) => void) => {
+  authFailureHandlers.add(handler);
+  return () => {
+    authFailureHandlers.delete(handler);
+  };
+};
+
+const isAuthFailureHandled = (error: unknown) =>
+  error && typeof error === "object" && handledAuthFailures.has(error as object);
+
+const trackAuthFailureError = (error: unknown) => {
+  if (error && typeof error === "object") {
+    handledAuthFailures.add(error as object);
+  }
+};
+
+const navigateHome = () => {
+  if (typeof window === "undefined" || window.location.pathname === ROUTES.HOME) {
+    return;
+  }
+  window.location.replace(ROUTES.HOME);
+};
+
+let isHandlingAuthFailure = false;
+
+const handleAuthFailure = () => {
+  if (isHandlingAuthFailure) {
+    return;
+  }
+  isHandlingAuthFailure = true;
+  try {
+    useAuthStore.getState().clearAuth();
+    if (authFailureHandlers.size > 0) {
+      authFailureHandlers.forEach((handler) => handler(ROUTES.HOME));
+      return;
+    }
+    navigateHome();
+  } finally {
+    isHandlingAuthFailure = false;
+  }
 };
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -134,14 +213,20 @@ api.interceptors.response.use(
         }
         return api(originalRequest);
       } catch (err) {
+        trackAuthFailureError(err);
         processQueue(err, null);
-        useAuthStore.getState().clearAuth();
-        return Promise.reject(err);
+        handleAuthFailure();
+        return Promise.reject(normalizeApiError(err));
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    const normalizedError = normalizeApiError(error);
+    if (normalizedError.status === 401 && !isAuthFailureHandled(error)) {
+      trackAuthFailureError(error);
+      handleAuthFailure();
+    }
+    return Promise.reject(normalizedError);
   },
 );

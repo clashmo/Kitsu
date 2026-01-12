@@ -32,6 +32,7 @@ const SearchResults = () => {
   const isQueryTooShort = displayPhrase.length > 0 && displayPhrase.length < 2;
 
   const { data: searchResults, isLoading } = useGetSearchAnimeResults(params);
+  const hasResults = Boolean(searchResults?.animes?.length);
 
   const [filters, setFilters] = React.useState<SearchAnimeParams>({
     q: params.q,
@@ -222,24 +223,34 @@ const SearchResults = () => {
       )}
       {!isQueryTooShort && (
         <>
-          <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
-            {searchResults?.animes.map((anime, idx) => (
-              <BlurFade key={idx} delay={idx * 0.05} inView>
-                <AnimeCard
-                  title={anime.name}
-                  subTitle={anime.type}
-                  poster={anime.poster}
-                  href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
-                  className="self-center justify-self-center"
-                  showGenre={false}
-                  episodeCard
-                  sub={anime?.episodes?.sub}
-                  dub={anime?.episodes?.dub}
-                />
-              </BlurFade>
-            ))}
-          </div>
-          {searchResults && searchResults.totalPages && (
+          {!isLoading &&
+            searchResults &&
+            searchResults.animes?.length === 0 && (
+              <div className="text-sm text-slate-300">
+                No results found. Try adjusting filters or using a different
+                keyword.
+              </div>
+            )}
+          {hasResults ? (
+            <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
+              {searchResults?.animes.map((anime, idx) => (
+                <BlurFade key={idx} delay={idx * 0.05} inView>
+                  <AnimeCard
+                    title={anime.name}
+                    subTitle={anime.type}
+                    poster={anime.poster}
+                    href={`${ROUTES.ANIME_DETAILS}/${anime.id}`}
+                    className="self-center justify-self-center"
+                    showGenre={false}
+                    episodeCard
+                    sub={anime?.episodes?.sub}
+                    dub={anime?.episodes?.dub}
+                  />
+                </BlurFade>
+              ))}
+            </div>
+          ) : null}
+          {searchResults && searchResults.totalPages && hasResults ? (
             <Pagination
               totalPages={searchResults?.totalPages}
               currentPage={params.page}
@@ -247,7 +258,7 @@ const SearchResults = () => {
               handlePageChange={handlePageChange}
               handlePreviousPage={handlePreviousPage}
             />
-          )}
+          ) : null}
         </>
       )}
     </div>
