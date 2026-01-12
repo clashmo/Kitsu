@@ -1,6 +1,5 @@
 "use client";
 
-import { useStore } from "zustand";
 import type { StoreApi, UseBoundStore } from "zustand";
 
 type Selector<TState, TSlice> = (state: TState) => TSlice;
@@ -27,43 +26,30 @@ export const createStoreFactory = <TState extends object>(
     return clientStore;
   };
 
-  const identitySelector = (state: TState) => state;
-
-  function useBoundStoreBase(): TState;
-  function useBoundStoreBase<StateSlice>(
-    selector: Selector<TState, StateSlice>,
-    equalityFn?: EqualityChecker<StateSlice>,
-  ): StateSlice;
-  function useBoundStoreBase<StateSlice>(
-    selector: Selector<TState, StateSlice> = identitySelector as Selector<
-      TState,
-      StateSlice
-    >,
-    equalityFn?: EqualityChecker<StateSlice>,
-  ) {
-    const store = getStore();
-    return useStore(store, selector, equalityFn);
-  }
-
-  const useBoundStore = useBoundStoreBase as BoundStore<TState>;
-
-  Object.defineProperties(useBoundStore, {
-    getState: {
-      get: () => getStore().getState,
+  const useBoundStore = Object.assign(
+    function useBoundStoreBase<StateSlice = TState>(
+      selector?: Selector<TState, StateSlice>,
+      equalityFn?: EqualityChecker<StateSlice>,
+    ) {
+      const store = getStore();
+      return selector
+        ? store(selector, equalityFn)
+        : store();
     },
-    setState: {
-      get: () => getStore().setState,
+    {
+      getState: () => getStore().getState(),
+      setState: (
+        ...args: Parameters<BoundStore<TState>["setState"]>
+      ) => getStore().setState(...args),
+      subscribe: (
+        ...args: Parameters<BoundStore<TState>["subscribe"]>
+      ) => getStore().subscribe(...args),
+      destroy: () => getStore().destroy(),
+      get persist() {
+        return getStore().persist;
+      },
     },
-    subscribe: {
-      get: () => getStore().subscribe,
-    },
-    destroy: {
-      get: () => getStore().destroy,
-    },
-    persist: {
-      get: () => getStore().persist,
-    },
-  });
+  ) satisfies BoundStore<TState>;
 
   return { getStore, useBoundStore };
 };
