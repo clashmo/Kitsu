@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -45,7 +48,36 @@ export const useAuthStore = create<IAuthStore>()(
 );
 
 export const useAuthHydrated = () => {
-  return useAuthStore.persist.hasHydrated();
+  const [isClient, setIsClient] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) {
+      return;
+    }
+    const persist = useAuthStore.persist;
+    if (!persist) {
+      setHasHydrated(true);
+      return;
+    }
+
+    if (persist.hasHydrated?.()) {
+      setHasHydrated(true);
+      return;
+    }
+
+    const unsubFinish = persist.onFinishHydration?.(() => setHasHydrated(true));
+
+    return () => {
+      unsubFinish?.();
+    };
+  }, [isClient]);
+
+  return isClient && hasHydrated;
 };
 
 export const useAuthSelector = <T>(selector: (state: IAuthStore) => T) =>
