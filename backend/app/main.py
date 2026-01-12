@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
     try:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, run_migrations)
-    except RuntimeError as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.exception("Application startup aborted due to migration failure")
         raise
 

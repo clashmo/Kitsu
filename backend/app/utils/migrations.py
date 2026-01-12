@@ -21,7 +21,7 @@ def _find_project_root() -> Path:
 
 
 def run_migrations() -> None:
-    logger.info("Running Alembic migrations…")
+    logger.info("Running Alembic migrations...")
 
     try:
         project_root = _find_project_root()
@@ -29,7 +29,7 @@ def run_migrations() -> None:
         logger.error("Could not locate alembic.ini near %s", __file__)
         raise RuntimeError("Alembic configuration not found") from exc
 
-    alembic_executable = shutil.which("alembic")
+    alembic_executable = os.getenv("ALEMBIC_BIN") or shutil.which("alembic")
     if not alembic_executable:
         logger.error("Alembic executable not found in PATH")
         raise RuntimeError("Alembic executable not found")
