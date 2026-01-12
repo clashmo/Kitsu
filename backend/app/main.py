@@ -12,6 +12,7 @@ from sqlalchemy.exc import (
     IntegrityError,
     MultipleResultsFound,
     NoResultFound,
+    ProgrammingError,
     SQLAlchemyError,
 )
 
@@ -73,12 +74,19 @@ async def lifespan(app: FastAPI):
         logger.warning("DEBUG=true — do not use in production")
 
     try:
-        await check_database_connection(engine)
-    except SQLAlchemyError:
-        logger.exception("Database connection failed during startup")
-        # Continue startup so /health can report database status
+        db_status = await check_database_connection(engine, include_metadata=True)
+    except SQLAlchemyError as exc:
+        logger.exception("Database readiness check failed during startup")
+        raise RuntimeError(
+            "Database not ready. Ensure DATABASE_URL is reachable and migrations are applied (e.g. with 'alembic upgrade head')."
+        ) from exc
     else:
-        logger.info("Database connection established")
+        logger.info(
+            "Database ready (current_database=%s, current_schema=%s, alembic_revision=%s)",
+            db_status.database or "unknown",
+            db_status.schema or "unknown",
+            db_status.alembic_revision or "unavailable",
+        )
 
     yield
 
@@ -191,6 +199,16 @@ async def handle_integrity_error(request: Request, exc: IntegrityError) -> JSONR
     )
 
 
+@app.exception_handler(ProgrammingError)
+async def handle_programming_error(request: Request, exc: ProgrammingError) -> JSONResponse:
+    message = "Database not initialized. Ensure migrations are applied."
+    _log_error(request, status.HTTP_500_INTERNAL_SERVER_ERROR, InternalError.code, message, exc)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=error_payload(InternalError.code, message),
+    )
+
+
 @app.exception_handler(NoResultFound)
 async def handle_no_result_found(request: Request, exc: NoResultFound) -> JSONResponse:
     message = "Requested resource was not found"
@@ -233,10 +251,11 @@ async def handle_unhandled_exception(
 @app.get("/health", tags=["health"])
 async def healthcheck() -> Response:
     try:
-        await check_database_connection(engine)
+        # Keep health probe lightweight; metadata logging is handled at startup
+        await check_database_connection(engine, include_metadata=False)
     except SQLAlchemyError as exc:
         logger.error("Healthcheck database probe failed: %s", exc)
-        return _health_response("error", status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return _health_response("error", status.HTTP_503_SERVICE_UNAVAILABLE)
 
     logger.debug("Healthcheck passed")
     return _health_response("ok", status.HTTP_200_OK)
