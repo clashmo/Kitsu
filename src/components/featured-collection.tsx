@@ -2,6 +2,7 @@ import React from "react";
 import Container from "./container";
 import FeaturedCollectionCard from "./featured-collection-card";
 import { IAnime, LatestCompletedAnime } from "@/types/anime";
+import { MIN_FEATURED_ANIME } from "@/constants/ui";
 
 type Props = {
   featuredAnime: [
@@ -13,18 +14,36 @@ type Props = {
 };
 
 const FeaturedCollection = ({ featuredAnime, loading }: Props) => {
-  if (loading) return <LoadingSkeleton />;
+  const PLACEHOLDER_CARD_CLASS =
+    "rounded-xl h-[15.625rem] w-[100%] md:h-[18.75rem] animate-pulse bg-slate-700";
+  const hasEnoughAnime = (category: { anime: IAnime[] }) =>
+    Array.isArray(category.anime) &&
+    category.anime.length >= MIN_FEATURED_ANIME;
+
+  const hasRenderableCategory =
+    Array.isArray(featuredAnime) && featuredAnime.some(hasEnoughAnime);
+
+  const shouldShowSkeleton = loading || !featuredAnime || !hasRenderableCategory;
+
+  if (shouldShowSkeleton) return <LoadingSkeleton />;
   return (
     <Container className="flex flex-col gap-5 items-center lg:items-start py-5">
       <h5 className="text-2xl font-bold">Featured Collection</h5>
       <div className="grid w-full gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {featuredAnime.map((category, idx) => (
-          <FeaturedCollectionCard
-            title={category.title}
-            key={idx}
-            anime={category.anime}
-          />
-        ))}
+        {featuredAnime.map((category, idx) =>
+          hasEnoughAnime(category) ? (
+            <FeaturedCollectionCard
+              title={category.title}
+              key={idx}
+              anime={category.anime}
+            />
+          ) : (
+            <div
+              key={`placeholder-${idx}`}
+              className={PLACEHOLDER_CARD_CLASS}
+            />
+          ),
+        )}
       </div>
     </Container>
   );
@@ -49,4 +68,3 @@ const LoadingSkeleton = () => {
 };
 
 export default FeaturedCollection;
-
