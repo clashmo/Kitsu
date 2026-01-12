@@ -39,6 +39,7 @@ def run_migrations() -> None:
             [alembic_executable, "upgrade", "head"],
             capture_output=True,
             text=True,
+            # Render deployment requires inheriting the full environment for Alembic
             env=os.environ,
             cwd=project_root,
             timeout=MIGRATIONS_TIMEOUT,
