@@ -33,8 +33,16 @@ async def get_refresh_token_by_hash(
 
 
 async def revoke_refresh_token(
-    session: AsyncSession, user_id: uuid.UUID, token_hash: str | None = None
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    token_hash: str | None = None,
+    delete: bool = False,
 ) -> RefreshToken | None:
+    """
+    Revoke a refresh token for a user. When token_hash is provided, that token is
+    targeted; otherwise the most recently created token for the user is used.
+    If delete is True, the matched token row is removed instead of being marked revoked.
+    """
     stmt = select(RefreshToken).where(RefreshToken.user_id == user_id)
     if token_hash is not None:
         stmt = stmt.where(RefreshToken.token_hash == token_hash)
@@ -46,6 +54,9 @@ async def revoke_refresh_token(
     if token is None:
         return None
 
-    token.revoked = True
+    if delete:
+        await session.delete(token)
+    else:
+        token.revoked = True
     await session.flush()
     return token

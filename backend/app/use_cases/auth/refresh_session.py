@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...crud.refresh_token import get_refresh_token_by_hash
+from ...crud.refresh_token import get_refresh_token_by_hash, revoke_refresh_token
 from ...errors import AppError, AuthError, PermissionError
 from ...utils.security import hash_refresh_token
 from .register_user import AuthTokens, issue_tokens
@@ -22,8 +22,9 @@ async def refresh_session(session: AsyncSession, refresh_token: str) -> AuthToke
             raise AuthError()
 
         user_id = stored_token.user_id
-        await session.delete(stored_token)
-        await session.flush()
+        await revoke_refresh_token(
+            session, user_id, token_hash=stored_token.token_hash, delete=True
+        )
         tokens = await issue_tokens(session, user_id)
         await session.commit()
         return tokens
