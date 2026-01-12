@@ -41,10 +41,11 @@ class _PasslibBcryptVersionFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         exc_info = record.exc_info
+        exc = exc_info[1] if exc_info else None
         return not (
             record.name == "passlib.handlers.bcrypt"
-            and exc_info
-            and isinstance(exc_info[1], AttributeError)
+            and exc is not None
+            and isinstance(exc, AttributeError)
         )
 
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
