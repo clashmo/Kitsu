@@ -99,12 +99,6 @@ const normalizeApiError = (error: unknown): ApiError => {
 
 const handledAuthFailures = new WeakSet<object>();
 
-const markAuthFailureHandled = (error: unknown) => {
-  if (error && typeof error === "object") {
-    handledAuthFailures.add(error as object);
-  }
-};
-
 const authFailureHandlers = new Set<() => void>();
 
 export const setAuthFailureHandler = (handler: () => void) => {
@@ -123,20 +117,24 @@ const trackAuthFailureError = (error: unknown) => {
   }
 };
 
+const navigateHome = () => {
+  if (typeof window === "undefined" || window.location.pathname === ROUTES.HOME) {
+    return;
+  }
+  if (Router?.replace) {
+    Router.replace(ROUTES.HOME);
+    return;
+  }
+  window.location.assign(ROUTES.HOME);
+};
+
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
   if (authFailureHandlers.size > 0) {
     authFailureHandlers.forEach((handler) => handler());
     return;
   }
-  const isAtHome = typeof window !== "undefined" && window.location.pathname === ROUTES.HOME;
-  if (!isAtHome && Router?.replace) {
-    Router.replace(ROUTES.HOME);
-    return;
-  }
-  if (typeof window !== "undefined" && !isAtHome) {
-    window.location.assign(ROUTES.HOME);
-  }
+  navigateHome();
 };
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -209,7 +207,7 @@ api.interceptors.response.use(
         }
         return api(originalRequest);
       } catch (err) {
-        markAuthFailureHandled(err);
+        trackAuthFailureError(err);
         processQueue(err, null);
         handleAuthFailure();
         return Promise.reject(normalizeApiError(err));

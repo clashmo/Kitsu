@@ -32,6 +32,7 @@ const SearchResults = () => {
   const isQueryTooShort = displayPhrase.length > 0 && displayPhrase.length < 2;
 
   const { data: searchResults, isLoading } = useGetSearchAnimeResults(params);
+  const hasResults = Boolean(searchResults?.animes?.length);
 
   const [filters, setFilters] = React.useState<SearchAnimeParams>({
     q: params.q,
@@ -230,7 +231,7 @@ const SearchResults = () => {
                 keyword.
               </div>
             )}
-          {searchResults?.animes?.length ? (
+          {hasResults ? (
             <div className="grid lg:grid-cols-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 w-full gap-5 content-center">
               {searchResults?.animes.map((anime, idx) => (
                 <BlurFade key={idx} delay={idx * 0.05} inView>
@@ -249,7 +250,7 @@ const SearchResults = () => {
               ))}
             </div>
           ) : null}
-          {searchResults && searchResults.totalPages && searchResults.animes?.length ? (
+          {searchResults && searchResults.totalPages && hasResults ? (
             <Pagination
               totalPages={searchResults?.totalPages}
               currentPage={params.page}
