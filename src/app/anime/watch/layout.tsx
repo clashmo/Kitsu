@@ -27,9 +27,15 @@ type Props = {
 
 const Layout = (props: Props) => {
   const searchParams = useSearchParams();
-  const { setAnime, setSelectedEpisode } = useAnimeStore();
+  const { setAnime, setSelectedEpisode } = useAnimeStore((state) => ({
+    setAnime: state.setAnime,
+    setSelectedEpisode: state.setSelectedEpisode,
+  }));
   const router = useRouter();
-  const auth = useAuthSelector((state) => state.auth);
+  const { isAuthenticated, authId } = useAuthSelector((state) => ({
+    isAuthenticated: Boolean(state.auth),
+    authId: state.auth?.id,
+  }));
 
   const currentAnimeId = useMemo(
     () => searchParams.get("anime"),
@@ -62,7 +68,7 @@ const Layout = (props: Props) => {
       router.push(ROUTES.HOME);
     }
     //eslint-disable-next-line
-  }, [animeId, auth]);
+  }, [animeId, isAuthenticated]);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
@@ -71,7 +77,7 @@ const Layout = (props: Props) => {
   useEffect(() => {
     const loadFavorites = async () => {
       if (!animeId || !api) return;
-      if (!auth) {
+      if (!isAuthenticated) {
         setIsFavorite(false);
         return;
       }
@@ -88,11 +94,11 @@ const Layout = (props: Props) => {
       }
     };
     loadFavorites();
-  }, [animeId, auth]);
+  }, [animeId, isAuthenticated, authId]);
 
   const toggleFavorite = async () => {
     if (!animeId) return;
-    if (!auth) {
+    if (!isAuthenticated) {
       toast.error("Please login to manage favorites", {
         style: { background: "red" },
       });

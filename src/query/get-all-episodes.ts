@@ -53,5 +53,8 @@ export const useGetAllEpisodes = (animeId: string) => {
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
+    enabled: Boolean(animeId),
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };
