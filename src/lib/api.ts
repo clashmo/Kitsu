@@ -98,7 +98,7 @@ const normalizeApiError = (error: unknown): ApiError => {
 
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && window.location.pathname !== ROUTES.HOME) {
     window.location.assign(ROUTES.HOME);
   }
 };
@@ -173,6 +173,7 @@ api.interceptors.response.use(
         }
         return api(originalRequest);
       } catch (err) {
+        (err as AxiosError & { __handledAuthFailure?: boolean }).__handledAuthFailure = true;
         processQueue(err, null);
         handleAuthFailure();
         return Promise.reject(normalizeApiError(err));
@@ -182,7 +183,10 @@ api.interceptors.response.use(
     }
 
     const normalizedError = normalizeApiError(error);
-    if (normalizedError.status === 401) {
+    if (
+      normalizedError.status === 401 &&
+      !(error as { __handledAuthFailure?: boolean }).__handledAuthFailure
+    ) {
       handleAuthFailure();
     }
     return Promise.reject(normalizedError);
