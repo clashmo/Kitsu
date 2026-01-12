@@ -98,9 +98,9 @@ const normalizeApiError = (error: unknown): ApiError => {
 
 const handledAuthFailures = new WeakSet<object>();
 
-const authFailureHandlers = new Set<() => void>();
+const authFailureHandlers = new Set<(redirectTo: string) => void>();
 
-export const setAuthFailureHandler = (handler: () => void) => {
+export const setAuthFailureHandler = (handler: (redirectTo: string) => void) => {
   authFailureHandlers.add(handler);
   return () => {
     authFailureHandlers.delete(handler);
@@ -108,7 +108,7 @@ export const setAuthFailureHandler = (handler: () => void) => {
 };
 
 const isAuthFailureHandled = (error: unknown) =>
-  !!(error && typeof error === "object" && handledAuthFailures.has(error as object));
+  error && typeof error === "object" && handledAuthFailures.has(error as object);
 
 const trackAuthFailureError = (error: unknown) => {
   if (error && typeof error === "object") {
@@ -126,7 +126,7 @@ const navigateHome = () => {
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
   if (authFailureHandlers.size > 0) {
-    authFailureHandlers.forEach((handler) => handler());
+    authFailureHandlers.forEach((handler) => handler(ROUTES.HOME));
     return;
   }
   navigateHome();
@@ -211,9 +211,9 @@ api.interceptors.response.use(
       }
     }
 
-    trackAuthFailureError(error);
     const normalizedError = normalizeApiError(error);
     if (normalizedError.status === 401 && !isAuthFailureHandled(error)) {
+      trackAuthFailureError(error);
       handleAuthFailure();
     }
     return Promise.reject(normalizedError);
