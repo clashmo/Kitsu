@@ -71,7 +71,7 @@ const getHomePageData: QueryFunction<IAnimeData, [string]> = async () => {
       poster: anime.poster,
       jname: anime.jname,
       episodes: anime.episodes,
-      type: anime.type ?? Type.Tv,
+      type: anime.type,
       otherInfo: [],
     }));
 
