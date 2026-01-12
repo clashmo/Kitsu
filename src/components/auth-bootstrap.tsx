@@ -71,7 +71,7 @@ const AuthBootstrap = () => {
     return () => {
       cancelled = true;
     };
-  }, [auth?.refreshToken, clearAuth, hydrated, setAuth, setIsAuthReady]);
+  }, [auth?.refreshToken, clearAuth, hydrated, setIsAuthReady]);
 
   return null;
 };
