@@ -40,13 +40,16 @@ class _PasslibBcryptVersionFilter(logging.Filter):
     """Ignore passlib's bcrypt version warning triggered with bcrypt>=4.x."""
 
     def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
         exc_info = record.exc_info
         exc = exc_info[1] if exc_info else None
-        return not (
-            record.name == "passlib.handlers.bcrypt"
-            and exc is not None
-            and isinstance(exc, AttributeError)
-        )
+
+        if record.name == "passlib.handlers.bcrypt":
+            if "error reading bcrypt version" in message:
+                return False
+            if isinstance(exc, AttributeError):
+                return False
+        return True
 
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 
