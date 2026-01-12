@@ -90,7 +90,7 @@ const NavBar = () => {
       }
     };
     refreshAuth();
-  }, [auth?.refreshToken, setAuth, setIsRefreshing, clearAuth]);
+  }, [auth?.refreshToken]);
 
   return (
     <div
