@@ -39,6 +39,7 @@ from .routers import (
     search,
     users,
     views,
+    watch,
 )
 from .utils.health import check_database_connection
 
@@ -116,6 +117,7 @@ routers = [
     collections.router,
     favorites.router,
     views.router,
+    watch.router,
 ]
 
 for router in routers:
