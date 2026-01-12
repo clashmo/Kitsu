@@ -22,6 +22,7 @@
 - `SECRET_KEY` — обязательный ключ подписи JWT; без него сервис не стартует.
 - `DATABASE_URL` — строка подключения `postgresql+asyncpg://USER:PASS@HOST:PORT/DB`.
   - Для `backend/docker-compose.yml` можно вместо этого задать `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — compose соберёт `DATABASE_URL` автоматически.
+- `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_RECYCLE`, `DB_POOL_PRE_PING` — явные настройки пула соединений (по умолчанию 5 / 10 / 1800 сек / true).
 - `ACCESS_TOKEN_EXPIRE_MINUTES` — время жизни access-токена в минутах (по умолчанию 30).
 - `REFRESH_TOKEN_EXPIRE_DAYS` — срок жизни refresh-токена в днях (по умолчанию 14).
 - `ALGORITHM` — алгоритм подписи JWT, по умолчанию `HS256`.

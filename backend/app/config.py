@@ -13,6 +13,10 @@ class Settings(BaseModel):
     debug: bool = Field(default=False)
     database_url: str = Field(default="")
     allowed_origins: list[str] = Field(default_factory=list)
+    db_pool_size: int = Field(default=5)
+    db_max_overflow: int = Field(default=10)
+    db_pool_recycle: int = Field(default=1800)
+    db_pool_pre_ping: bool = Field(default=True)
     secret_key: str | None = Field(default=None)
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=14)
@@ -56,6 +60,32 @@ class Settings(BaseModel):
         if not parsed_db.hostname:
             raise ValueError("DATABASE_URL must include hostname")
 
+        db_pool_size = int(os.getenv("DB_POOL_SIZE", cls.model_fields["db_pool_size"].default))
+        if db_pool_size <= 0:
+            raise ValueError("DB_POOL_SIZE must be greater than 0")
+
+        db_max_overflow = int(
+            os.getenv("DB_MAX_OVERFLOW", cls.model_fields["db_max_overflow"].default)
+        )
+        if db_max_overflow < 0:
+            raise ValueError("DB_MAX_OVERFLOW must be greater than or equal to 0")
+
+        db_pool_recycle = int(
+            os.getenv("DB_POOL_RECYCLE", cls.model_fields["db_pool_recycle"].default)
+        )
+        if db_pool_recycle <= 0:
+            raise ValueError("DB_POOL_RECYCLE must be greater than 0")
+
+        raw_db_pool_pre_ping = os.getenv(
+            "DB_POOL_PRE_PING", str(cls.model_fields["db_pool_pre_ping"].default)
+        ).strip().lower()
+        if raw_db_pool_pre_ping in {"1", "true", "yes", "on"}:
+            db_pool_pre_ping = True
+        elif raw_db_pool_pre_ping in {"0", "false", "no", "off"}:
+            db_pool_pre_ping = False
+        else:
+            raise ValueError("DB_POOL_PRE_PING must be a boolean value")
+
         return cls(
             app_name=os.getenv("APP_NAME", cls.model_fields["app_name"].default),
             debug=os.getenv("DEBUG", "false").lower() == "true",
@@ -75,6 +105,10 @@ class Settings(BaseModel):
                 )
             ),
             algorithm=os.getenv("ALGORITHM", cls.model_fields["algorithm"].default),
+            db_pool_size=db_pool_size,
+            db_max_overflow=db_max_overflow,
+            db_pool_recycle=db_pool_recycle,
+            db_pool_pre_ping=db_pool_pre_ping,
         )
 
 
