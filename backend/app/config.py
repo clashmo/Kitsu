@@ -68,7 +68,7 @@ class Settings(BaseModel):
             os.getenv("DB_MAX_OVERFLOW", cls.model_fields["db_max_overflow"].default)
         )
         if db_max_overflow < 0:
-            raise ValueError("DB_MAX_OVERFLOW must be greater or equal to 0")
+            raise ValueError("DB_MAX_OVERFLOW must be greater than or equal to 0")
 
         db_pool_recycle = int(
             os.getenv("DB_POOL_RECYCLE", cls.model_fields["db_pool_recycle"].default)
