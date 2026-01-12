@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI):
     except SQLAlchemyError as exc:
         logger.exception("Database readiness check failed during startup")
         raise RuntimeError(
-            "Database not ready. Ensure DATABASE_URL is reachable and migrations are applied with 'alembic upgrade head'."
+            "Database not ready. Ensure DATABASE_URL is reachable and migrations are applied (e.g. with 'alembic upgrade head')."
         ) from exc
     else:
         logger.info(
