@@ -37,8 +37,15 @@ AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
 
 class _PasslibBcryptVersionFilter(logging.Filter):
+    """Ignore passlib's bcrypt version warning triggered with bcrypt>=4.x."""
+
     def filter(self, record: logging.LogRecord) -> bool:
-        return "error reading bcrypt version" not in record.getMessage()
+        exc_info = record.exc_info
+        return not (
+            record.name == "passlib.handlers.bcrypt"
+            and exc_info
+            and isinstance(exc_info[1], AttributeError)
+        )
 
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 
@@ -60,7 +67,6 @@ logger.setLevel(log_level)
 # Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
 passlib_logger = logging.getLogger("passlib.handlers.bcrypt")
 passlib_logger.addFilter(_PasslibBcryptVersionFilter())
-passlib_logger.setLevel(logging.WARNING)
 
 from .routers import (  # noqa: E402 - import after logging setup to suppress passlib warnings
     anime,
