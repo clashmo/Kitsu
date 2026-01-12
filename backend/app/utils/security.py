@@ -6,6 +6,7 @@ from typing import Any
 
 import jwt
 from passlib.context import CryptContext
+from passlib.hash import bcrypt as passlib_bcrypt
 
 from ..config import settings
 
@@ -17,7 +18,12 @@ class TokenInvalidError(Exception):
     pass
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+passlib_bcrypt.set_backend("bcrypt")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__ident="2b",
+)
 
 
 def _normalize_password(password: str) -> str:
