@@ -42,6 +42,7 @@ from .routers import (
     watch,
 )
 from .utils.health import check_database_connection
+from .utils.migrations import run_migrations
 
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
@@ -73,6 +74,12 @@ async def lifespan(app: FastAPI):
     logger.info("Starting application")
     if settings.debug:
         logger.warning("DEBUG=true — do not use in production")
+
+    try:
+        run_migrations()
+    except RuntimeError as exc:
+        logger.exception("Alembic migration execution failed during startup")
+        raise
 
     try:
         db_status = await check_database_connection(engine, include_metadata=True)
