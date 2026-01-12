@@ -27,15 +27,25 @@ export const createStoreFactory = <TState extends object>(
     return clientStore;
   };
 
-  const useBoundStore = (<StateSlice>(
-    selector?: Selector<TState, StateSlice>,
+  const identitySelector = (state: TState) => state;
+
+  function useBoundStoreBase(): TState;
+  function useBoundStoreBase<StateSlice>(
+    selector: Selector<TState, StateSlice>,
     equalityFn?: EqualityChecker<StateSlice>,
-  ) => {
+  ): StateSlice;
+  function useBoundStoreBase<StateSlice>(
+    selector: Selector<TState, StateSlice> = identitySelector as Selector<
+      TState,
+      StateSlice
+    >,
+    equalityFn?: EqualityChecker<StateSlice>,
+  ) {
     const store = getStore();
-    return selector
-      ? useStore(store, selector, equalityFn)
-      : useStore(store);
-  }) as BoundStore<TState>;
+    return useStore(store, selector, equalityFn);
+  }
+
+  const useBoundStore = useBoundStoreBase as BoundStore<TState>;
 
   Object.defineProperties(useBoundStore, {
     getState: {
