@@ -6,7 +6,10 @@ type Selector<TState, TSlice> = (state: TState) => TSlice;
 type EqualityChecker<TSlice> = (a: TSlice, b: TSlice) => boolean;
 
 type BoundStore<TState> = UseBoundStore<StoreApi<TState>> & {
-  persist?: unknown;
+  persist?: {
+    hasHydrated?: () => boolean;
+    onFinishHydration?: (fn: () => void) => () => void;
+  };
 };
 
 export const createStoreFactory = <TState extends object>(
@@ -32,7 +35,7 @@ export const createStoreFactory = <TState extends object>(
       equalityFn?: EqualityChecker<StateSlice>,
     ) {
       const store = getStore();
-      return selector
+      return selector !== undefined
         ? store(selector, equalityFn)
         : store();
     },
