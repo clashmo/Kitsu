@@ -53,7 +53,6 @@ class _PasslibBcryptVersionFilter(logging.Filter):
 
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 
-
 def _resolve_log_level(value: str) -> int:
     level = logging.getLevelName(value)
     return level if isinstance(level, int) else logging.INFO
@@ -72,7 +71,7 @@ logger.setLevel(log_level)
 passlib_logger = logging.getLogger("passlib.handlers.bcrypt")
 passlib_logger.addFilter(_PasslibBcryptVersionFilter())
 
-from .routers import (  # noqa: E402 - import after logging setup to suppress passlib warnings
+from .routers import (  # noqa: E402 - import after logging setup to prevent passlib bcrypt version warnings during module loading
     anime,
     auth,
     collections,
