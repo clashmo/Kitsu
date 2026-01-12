@@ -33,13 +33,14 @@ async def get_refresh_token_by_hash(
 
 
 async def revoke_refresh_token(
-    session: AsyncSession, user_id: uuid.UUID
+    session: AsyncSession, user_id: uuid.UUID, token_hash: str | None = None
 ) -> RefreshToken | None:
+    stmt = select(RefreshToken).where(RefreshToken.user_id == user_id)
+    if token_hash is not None:
+        stmt = stmt.where(RefreshToken.token_hash == token_hash)
+
     result = await session.execute(
-        select(RefreshToken)
-        .where(RefreshToken.user_id == user_id)
-        .order_by(RefreshToken.created_at.desc())
-        .limit(1)
+        stmt.order_by(RefreshToken.created_at.desc()).limit(1)
     )
     token = result.scalars().first()
     if token is None:

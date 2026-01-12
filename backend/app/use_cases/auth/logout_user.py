@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...crud.refresh_token import get_refresh_token_by_hash
+from ...crud.refresh_token import get_refresh_token_by_hash, revoke_refresh_token
 from ...errors import AppError
 from ...utils.security import hash_refresh_token
 
@@ -14,8 +14,9 @@ async def logout_user(session: AsyncSession, refresh_token: str) -> None:
         if stored_token is None:
             return
 
-        stored_token.revoked = True
-        await session.flush()
+        await revoke_refresh_token(
+            session, stored_token.user_id, token_hash=stored_token.token_hash
+        )
         await session.commit()
     except AppError:
         await session.rollback()
