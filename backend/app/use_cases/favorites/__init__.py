@@ -1,0 +1,3 @@
+"""
+Favorites use cases placeholder.
+"""

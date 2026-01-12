@@ -1,20 +1,10 @@
-from datetime import datetime, timedelta, timezone
-import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import settings
-from ..crud.refresh_token import (
-    create_or_rotate_refresh_token,
-    get_refresh_token_by_hash,
-    revoke_refresh_token,
-)
-from ..crud.user import (
-    authenticate_user,
-    create_user_with_password,
-    get_user_by_email,
-)
+from ..crud.refresh_token import get_refresh_token_by_hash, revoke_refresh_token
+from ..crud.user import authenticate_user
 from ..dependencies import get_db
 from ..schemas.auth import (
     LogoutRequest,
@@ -23,42 +13,22 @@ from ..schemas.auth import (
     UserLogin,
     UserRegister,
 )
+from ..use_cases.auth.register_user import issue_tokens, register_user
 from ..utils.security import (
-    create_access_token,
-    create_refresh_token,
     hash_refresh_token,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-async def _issue_tokens(db: AsyncSession, user_id: uuid.UUID) -> TokenResponse:
-    access_token = create_access_token({"sub": str(user_id)})
-    refresh_token = create_refresh_token()
-    token_hash = hash_refresh_token(refresh_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(
-        days=settings.refresh_token_expire_days
-    )
-    await create_or_rotate_refresh_token(db, user_id, token_hash, expires_at)
-    await db.commit()
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
-
-
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     payload: UserRegister, db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
-    existing_user = await get_user_by_email(db, payload.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
-
-    user = await create_user_with_password(db, payload.email, payload.password)
-    await db.flush()
-
-    return await _issue_tokens(db, user.id)
+    tokens = await register_user(db, payload.email, payload.password)
+    return TokenResponse(
+        access_token=tokens.access_token, refresh_token=tokens.refresh_token
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -70,7 +40,10 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> Token
             detail="Invalid email or password",
         )
 
-    return await _issue_tokens(db, user.id)
+    tokens = await issue_tokens(db, user.id)
+    return TokenResponse(
+        access_token=tokens.access_token, refresh_token=tokens.refresh_token
+    )
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -91,7 +64,10 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired"
         )
-    return await _issue_tokens(db, stored_token.user_id)
+    tokens = await issue_tokens(db, stored_token.user_id)
+    return TokenResponse(
+        access_token=tokens.access_token, refresh_token=tokens.refresh_token
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
