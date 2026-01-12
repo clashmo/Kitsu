@@ -5,6 +5,7 @@ import FeaturedCollection from "@/components/featured-collection";
 import { useGetHomePageData } from "@/query/get-home-page-data";
 import { IAnime, LatestCompletedAnime, SpotlightAnime } from "@/types/anime";
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
 // Dynamically import components
 const HeroSection = dynamic(() => import("@/components/hero-section"));
@@ -15,23 +16,35 @@ const AnimeSchedule = dynamic(() => import("@/components/anime-schedule"));
 const AnimeSections = dynamic(() => import("@/components/anime-sections"));
 
 export default function Home() {
-  const { data, isLoading } = useGetHomePageData();
+  const [shouldLoadHomeData, setShouldLoadHomeData] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return; // Skip during SSR
+    const trigger = () => setShouldLoadHomeData(true);
+    const timeoutId = window.setTimeout(trigger, 100);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  const { data, isLoading } = useGetHomePageData({
+    enabled: shouldLoadHomeData,
+  });
+  const isHomeDataPending = !shouldLoadHomeData || isLoading || !data;
 
   return (
     <div className="flex flex-col bg-[#121212]">
       <HeroSection
         spotlightAnime={data?.spotlightAnimes as SpotlightAnime[]}
-        isDataLoading={isLoading}
+        isDataLoading={isHomeDataPending}
       />
       <LatestEpisodesAnime
-        loading={isLoading}
+        loading={isHomeDataPending}
         latestEpisodes={data?.latestEpisodeAnimes as LatestCompletedAnime[]}
       />
 
-      <ContinueWatching loading={isLoading} />
+      <ContinueWatching loading={isHomeDataPending} />
 
       <FeaturedCollection
-        loading={isLoading}
+        loading={isHomeDataPending}
         featuredAnime={[
           {
             title: "Most Favorite Anime",
@@ -50,7 +63,7 @@ export default function Home() {
       <AnimeSections
         title={"Trending Anime"}
         trendingAnime={data?.trendingAnimes as IAnime[]}
-        loading={isLoading}
+        loading={isHomeDataPending}
       />
 
       <AnimeSchedule />
@@ -58,7 +71,7 @@ export default function Home() {
       <AnimeSections
         title={"Upcoming Animes"}
         trendingAnime={data?.topUpcomingAnimes as IAnime[]}
-        loading={isLoading}
+        loading={isHomeDataPending}
       />
     </div>
   );
