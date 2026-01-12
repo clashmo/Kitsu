@@ -54,7 +54,7 @@ export const useAuthHydrated = () => {
     setIsClient(true);
   }, []);
 
-  return isClient;
+  return isClient && (useAuthStore.persist?.hasHydrated?.() ?? false);
 };
 
 export const useAuthSelector = <T>(selector: (state: IAuthStore) => T) =>
