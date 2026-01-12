@@ -14,7 +14,9 @@ async def logout_user(session: AsyncSession, refresh_token: str) -> None:
         if stored_token is None:
             return
 
-        await revoke_refresh_token(session, stored_token.user_id)
+        await revoke_refresh_token(
+            session, stored_token.user_id, token_hash=stored_token.token_hash
+        )
         await session.commit()
     except AppError:
         await session.rollback()
