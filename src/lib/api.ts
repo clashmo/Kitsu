@@ -96,8 +96,26 @@ const normalizeApiError = (error: unknown): ApiError => {
   return { code: "unknown_error", message: "Unexpected error occurred." };
 };
 
+const handledAuthFailures = new WeakSet<object>();
+
+const markAuthFailureHandled = (error: unknown) => {
+  if (error && typeof error === "object") {
+    handledAuthFailures.add(error as object);
+  }
+};
+
+let onAuthFailureNavigate: (() => void) | null = null;
+
+export const setAuthFailureHandler = (handler: () => void) => {
+  onAuthFailureNavigate = handler;
+};
+
 const handleAuthFailure = () => {
   useAuthStore.getState().clearAuth();
+  if (onAuthFailureNavigate) {
+    onAuthFailureNavigate();
+    return;
+  }
   if (typeof window !== "undefined" && window.location.pathname !== ROUTES.HOME) {
     window.location.assign(ROUTES.HOME);
   }
@@ -173,7 +191,7 @@ api.interceptors.response.use(
         }
         return api(originalRequest);
       } catch (err) {
-        (err as AxiosError & { __handledAuthFailure?: boolean }).__handledAuthFailure = true;
+        markAuthFailureHandled(err);
         processQueue(err, null);
         handleAuthFailure();
         return Promise.reject(normalizeApiError(err));
@@ -185,7 +203,7 @@ api.interceptors.response.use(
     const normalizedError = normalizeApiError(error);
     if (
       normalizedError.status === 401 &&
-      !(error as { __handledAuthFailure?: boolean }).__handledAuthFailure
+      !(error && typeof error === "object" && handledAuthFailures.has(error as object))
     ) {
       handleAuthFailure();
     }
