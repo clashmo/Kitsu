@@ -63,7 +63,7 @@ export const useGetSearchAnimeResults = (params: SearchAnimeParams) => {
   return useQuery({
     queryFn: () => searchAnime(normalizedParams),
     queryKey: queryKeys.searchAnime(normalizedParams.q, normalizedParams.page),
-    enabled: normalizedParams.q.length >= 2,
+    enabled: (normalizedParams.q ?? "").length >= 2,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
     retry: false,
