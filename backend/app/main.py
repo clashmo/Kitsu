@@ -36,6 +36,10 @@ from .utils.migrations import run_migrations
 AVATAR_DIR = Path(__file__).resolve().parent.parent / "uploads" / "avatars"
 AVATAR_DIR.mkdir(parents=True, exist_ok=True)
 
+class _PasslibBcryptVersionFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "error reading bcrypt version" not in record.getMessage()
+
 log_level_name = os.getenv("LOG_LEVEL", "INFO").upper()
 
 
@@ -54,9 +58,11 @@ if not logging.getLogger().handlers:
 logger = logging.getLogger("kitsu")
 logger.setLevel(log_level)
 # Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
-logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
+passlib_logger = logging.getLogger("passlib.handlers.bcrypt")
+passlib_logger.addFilter(_PasslibBcryptVersionFilter())
+passlib_logger.setLevel(logging.WARNING)
 
-from .routers import (  # Import after logging setup to suppress passlib warnings; noqa: E402
+from .routers import (  # noqa: E402 - import after logging setup to suppress passlib warnings
     anime,
     auth,
     collections,
