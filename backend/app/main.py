@@ -251,7 +251,8 @@ async def handle_unhandled_exception(
 @app.get("/health", tags=["health"])
 async def healthcheck() -> Response:
     try:
-        await check_database_connection(engine)
+        # Keep health probe lightweight; metadata logging is handled at startup
+        await check_database_connection(engine, include_metadata=False)
     except SQLAlchemyError as exc:
         logger.error("Healthcheck database probe failed: %s", exc)
         return _health_response("error", status.HTTP_503_SERVICE_UNAVAILABLE)
