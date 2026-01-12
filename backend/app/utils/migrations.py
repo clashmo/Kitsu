@@ -5,18 +5,6 @@ import subprocess
 from pathlib import Path
 
 logger = logging.getLogger("kitsu.migrations")
-
-
-def _find_project_root() -> Path:
-    current = Path(__file__).resolve()
-    for parent in current.parents:
-        if (parent / "alembic.ini").exists():
-            return parent
-    return current.parents[2]
-
-
-# utils/migrations.py -> app -> backend -> project root (alembic.ini lives here)
-PROJECT_ROOT = _find_project_root()
 DEFAULT_TIMEOUT_SECONDS = 60
 try:
     MIGRATIONS_TIMEOUT = int(os.getenv("ALEMBIC_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS))
@@ -24,8 +12,22 @@ except ValueError:
     MIGRATIONS_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 
 
+def _find_project_root() -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "alembic.ini").exists():
+            return parent
+    raise RuntimeError("alembic.ini not found in parent directories")
+
+
 def run_migrations() -> None:
     logger.info("Running Alembic migrations…")
+
+    try:
+        project_root = _find_project_root()
+    except RuntimeError as exc:
+        logger.error("Could not locate alembic.ini near %s", __file__)
+        raise RuntimeError("Alembic configuration not found") from exc
 
     alembic_executable = shutil.which("alembic")
     if not alembic_executable:
@@ -37,8 +39,8 @@ def run_migrations() -> None:
             [alembic_executable, "upgrade", "head"],
             capture_output=True,
             text=True,
-            env=os.environ.copy(),
-            cwd=PROJECT_ROOT,
+            env=os.environ,
+            cwd=project_root,
             timeout=MIGRATIONS_TIMEOUT,
         )
     except subprocess.TimeoutExpired as exc:

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -76,7 +77,8 @@ async def lifespan(app: FastAPI):
         logger.warning("DEBUG=true — do not use in production")
 
     try:
-        run_migrations()
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, run_migrations)
     except RuntimeError as exc:
         logger.exception("Application startup aborted due to migration failure")
         raise
