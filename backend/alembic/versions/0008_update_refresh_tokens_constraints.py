@@ -15,20 +15,18 @@ depends_on = None
 
 
 def upgrade() -> None:
+    old_constraint_name = "uq_refresh_tokens_user_id"
+    new_constraint_name = "uq_refresh_tokens_token_hash"
+
     with op.batch_alter_table("refresh_tokens") as batch_op:
-        batch_op.drop_constraint(
-            op.f("uq_refresh_tokens_user_id"), type_="unique"
-        )
-        batch_op.create_unique_constraint(
-            op.f("uq_refresh_tokens_token_hash"), ["token_hash"]
-        )
+        batch_op.drop_constraint(old_constraint_name, type_="unique")
+        batch_op.create_unique_constraint(new_constraint_name, ["token_hash"])
 
 
 def downgrade() -> None:
+    old_constraint_name = "uq_refresh_tokens_user_id"
+    new_constraint_name = "uq_refresh_tokens_token_hash"
+
     with op.batch_alter_table("refresh_tokens") as batch_op:
-        batch_op.drop_constraint(
-            op.f("uq_refresh_tokens_token_hash"), type_="unique"
-        )
-        batch_op.create_unique_constraint(
-            op.f("uq_refresh_tokens_user_id"), ["user_id"]
-        )
+        batch_op.drop_constraint(new_constraint_name, type_="unique")
+        batch_op.create_unique_constraint(old_constraint_name, ["user_id"])

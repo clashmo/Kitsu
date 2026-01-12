@@ -36,7 +36,9 @@ async def revoke_refresh_token(
     session: AsyncSession, user_id: uuid.UUID
 ) -> RefreshToken | None:
     result = await session.execute(
-        select(RefreshToken).where(RefreshToken.user_id == user_id)
+        select(RefreshToken)
+        .where(RefreshToken.user_id == user_id)
+        .order_by(RefreshToken.created_at.desc())
     )
     tokens = result.scalars().all()
     if not tokens:
@@ -45,4 +47,4 @@ async def revoke_refresh_token(
     for token in tokens:
         token.revoked = True
     await session.flush()
-    return tokens[-1]
+    return tokens[0]
