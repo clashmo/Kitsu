@@ -30,18 +30,6 @@ from .errors import (
     error_payload,
     resolve_error_code,
 )
-from .routers import (
-    anime,
-    auth,
-    collections,
-    episodes,
-    favorites,
-    releases,
-    search,
-    users,
-    views,
-    watch,
-)
 from .utils.health import check_database_connection
 from .utils.migrations import run_migrations
 
@@ -65,6 +53,21 @@ if not logging.getLogger().handlers:
     )
 logger = logging.getLogger("kitsu")
 logger.setLevel(log_level)
+logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
+# Suppress bcrypt version warnings emitted by passlib with bcrypt>=4
+
+from .routers import (  # noqa: E402
+    anime,
+    auth,
+    collections,
+    episodes,
+    favorites,
+    releases,
+    search,
+    users,
+    views,
+    watch,
+)
 
 
 def _health_response(status_text: str, status_code: int) -> JSONResponse:

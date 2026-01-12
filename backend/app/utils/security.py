@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -10,8 +9,6 @@ from passlib.context import CryptContext
 from passlib.hash import bcrypt as passlib_bcrypt
 
 from ..config import settings
-
-logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
 
 class TokenExpiredError(Exception):
     pass
