@@ -5,8 +5,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .crud.user import get_user_by_id
 from .database import get_session
+from .models.user import User
 from .utils.security import (
     TokenExpiredError,
     TokenInvalidError,
@@ -57,7 +57,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
         ) from None
 
-    user = await get_user_by_id(db, user_id)
+    user = await db.get(User, user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"

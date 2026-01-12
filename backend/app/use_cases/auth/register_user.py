@@ -6,11 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...config import settings
 from ...crud.refresh_token import create_or_rotate_refresh_token
-from ...crud.user import create_user_with_password, get_user_by_email
-from ...errors import ValidationError
+from ...crud.user import get_user_by_email
+from ...errors import AppError, ValidationError
+from ...models.user import User
 from ...utils.security import (
     create_access_token,
     create_refresh_token,
+    hash_password,
     hash_refresh_token,
 )
 
@@ -34,9 +36,18 @@ async def issue_tokens(session: AsyncSession, user_id: uuid.UUID) -> AuthTokens:
 
 
 async def register_user(session: AsyncSession, email: str, password: str) -> AuthTokens:
-    existing_user = await get_user_by_email(session, email)
-    if existing_user:
-        raise ValidationError("Email already registered")
+    try:
+        existing_user = await get_user_by_email(session, email)
+        if existing_user:
+            raise ValidationError("Email already registered")
 
-    user = await create_user_with_password(session, email, password)
-    return await issue_tokens(session, user.id)
+        user = User(email=email, password_hash=hash_password(password))
+        session.add(user)
+        await session.flush()
+        return await issue_tokens(session, user.id)
+    except AppError:
+        await session.rollback()
+        raise
+    except Exception:
+        await session.rollback()
+        raise

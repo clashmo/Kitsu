@@ -1,10 +1,6 @@
-from datetime import datetime, timezone
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..crud.refresh_token import get_refresh_token_by_hash, revoke_refresh_token
-from ..crud.user import authenticate_user
 from ..dependencies import get_db
 from ..schemas.auth import (
     LogoutRequest,
@@ -13,10 +9,10 @@ from ..schemas.auth import (
     UserLogin,
     UserRegister,
 )
-from ..use_cases.auth.register_user import issue_tokens, register_user
-from ..utils.security import (
-    hash_refresh_token,
-)
+from ..use_cases.auth.login_user import login_user
+from ..use_cases.auth.logout_user import logout_user
+from ..use_cases.auth.refresh_session import refresh_session
+from ..use_cases.auth.register_user import register_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,14 +29,7 @@ async def register(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> TokenResponse:
-    user = await authenticate_user(db, payload.email, payload.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    tokens = await issue_tokens(db, user.id)
+    tokens = await login_user(db, payload.email, payload.password)
     return TokenResponse(
         access_token=tokens.access_token, refresh_token=tokens.refresh_token
     )
@@ -50,21 +39,7 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> Token
 async def refresh_token(
     payload: RefreshTokenRequest, db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
-    token_hash = hash_refresh_token(payload.refresh_token)
-    stored_token = await get_refresh_token_by_hash(db, token_hash, for_update=True)
-    if stored_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
-    if stored_token.revoked:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Refresh token has been revoked"
-        )
-    if stored_token.expires_at <= datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired"
-        )
-    tokens = await issue_tokens(db, stored_token.user_id)
+    tokens = await refresh_session(db, payload.refresh_token)
     return TokenResponse(
         access_token=tokens.access_token, refresh_token=tokens.refresh_token
     )
@@ -74,10 +49,4 @@ async def refresh_token(
 async def logout(
     payload: LogoutRequest, db: AsyncSession = Depends(get_db)
 ) -> None:
-    token_hash = hash_refresh_token(payload.refresh_token)
-    stored_token = await get_refresh_token_by_hash(db, token_hash, for_update=True)
-    if stored_token is None:
-        return
-
-    await revoke_refresh_token(db, stored_token.user_id)
-    await db.commit()
+    await logout_user(db, payload.refresh_token)
