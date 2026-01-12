@@ -96,6 +96,7 @@ const normalizeApiError = (error: unknown): ApiError => {
   return { code: "unknown_error", message: "Unexpected error occurred." };
 };
 
+// Tracks error objects that already triggered auth handling to avoid duplicate redirects
 const handledAuthFailures = new WeakSet<object>();
 
 const authFailureHandlers = new Set<(redirectTo: string) => void>();
@@ -120,16 +121,26 @@ const navigateHome = () => {
   if (typeof window === "undefined" || window.location.pathname === ROUTES.HOME) {
     return;
   }
-  window.location.assign(ROUTES.HOME);
+  window.location.replace(ROUTES.HOME);
 };
 
+let isHandlingAuthFailure = false;
+
 const handleAuthFailure = () => {
-  useAuthStore.getState().clearAuth();
-  if (authFailureHandlers.size > 0) {
-    authFailureHandlers.forEach((handler) => handler(ROUTES.HOME));
+  if (isHandlingAuthFailure) {
     return;
   }
-  navigateHome();
+  isHandlingAuthFailure = true;
+  try {
+    useAuthStore.getState().clearAuth();
+    if (authFailureHandlers.size > 0) {
+      authFailureHandlers.forEach((handler) => handler(ROUTES.HOME));
+      return;
+    }
+    navigateHome();
+  } finally {
+    isHandlingAuthFailure = false;
+  }
 };
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
