@@ -29,8 +29,11 @@ async def check_database_connection(
 
         database = schema = revision = None
         if include_metadata:
-            database = await connection.scalar(text("SELECT current_database()"))
-            schema = await connection.scalar(text("SELECT current_schema()"))
+            try:
+                database = await connection.scalar(text("SELECT current_database()"))
+                schema = await connection.scalar(text("SELECT current_schema()"))
+            except SQLAlchemyError as exc:
+                logger.debug("Database metadata not available: %s", exc)
             try:
                 revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
             except SQLAlchemyError as exc:  # Alembic table might be missing
