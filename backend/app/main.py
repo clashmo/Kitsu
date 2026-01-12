@@ -210,11 +210,7 @@ async def healthcheck() -> Response:
         await check_database_connection(engine)
     except SQLAlchemyError as exc:
         logger.error("Healthcheck database probe failed: %s", exc)
-        # Errors follow the unified error contract; success payload remains unchanged for compatibility.
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=error_payload(InternalError.code, "Database unavailable"),
-        )
+        return _health_response("error", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     logger.debug("Healthcheck passed")
     return _health_response("ok", status.HTTP_200_OK)
